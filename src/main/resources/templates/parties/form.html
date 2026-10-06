@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="${isCustomer} ? #{nav.customers} : #{nav.suppliers}">Party</title></head>
+<body>
+<div id="content">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="page-title">
+            <span th:text="${party.id == null} ? #{common.addNew} : #{common.edit}"></span> -
+            <span th:text="${isCustomer} ? #{party.customer} : #{party.supplier}"></span>
+        </h4>
+        <a class="btn btn-light ms-auto" th:href="@{${base}}"><i class="bi bi-arrow-return-left"></i> <span th:text="#{common.back}"></span></a>
+    </div>
+    <div class="card" style="max-width: 720px"><div class="card-body">
+        <form th:action="@{${base} + '/save'}" method="post" class="row g-3">
+            <input type="hidden" name="id" th:value="${party.id}">
+            <div class="col-md-6">
+                <label class="form-label" th:text="#{col.name}"></label> <span class="text-danger">*</span>
+                <input type="text" name="name" class="form-control" th:value="${party.name}" required autofocus>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" th:text="#{col.phone}"></label>
+                <input type="text" name="phone" class="form-control" dir="ltr" th:value="${party.phone}">
+            </div>
+            <div class="col-12">
+                <label class="form-label" th:text="#{col.address}"></label>
+                <input type="text" name="address" class="form-control" th:value="${party.address}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" th:text="#{settings.taxNumber}"></label>
+                <input type="text" name="taxNumber" class="form-control" th:value="${party.taxNumber}">
+            </div>
+            <div class="col-md-6" th:if="${party.id == null}">
+                <label class="form-label" th:text="#{party.openingBalance}"></label>
+                <input type="number" step="0.01" name="balance" class="form-control" value="0">
+                <div class="form-text" th:text="${isCustomer} ? #{party.openingHelpCustomer} : #{party.openingHelpSupplier}"></div>
+            </div>
+            <div class="col-12">
+                <label class="form-label" th:text="#{col.notes}"></label>
+                <input type="text" name="notes" class="form-control" th:value="${party.notes}">
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> <span th:text="#{common.save}"></span></button>
+            </div>
+        </form>
+    </div></div>
+</div>
+<script></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{nav.users}">User</title></head>
+<body>
+<div id="content">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="page-title" th:text="${user.id == null} ? #{common.addNew} : #{common.edit}"></h4>
+        <a class="btn btn-light ms-auto" th:href="@{/users}"><i class="bi bi-arrow-return-left"></i> <span th:text="#{common.back}"></span></a>
+    </div>
+    <div class="card" style="max-width: 560px"><div class="card-body">
+        <form th:action="@{/users/save}" method="post" class="row g-3" autocomplete="off">
+            <input type="hidden" name="id" th:value="${user.id}">
+            <div class="col-md-6">
+                <label class="form-label" th:text="#{login.username}"></label>
+                <input type="text" name="username" class="form-control" dir="ltr" th:value="${user.username}" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" th:text="#{col.name}"></label>
+                <input type="text" name="fullName" class="form-control" th:value="${user.fullName}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" th:text="#{user.role}"></label>
+                <select name="role" class="form-select">
+                    <option th:each="r : ${roles}" th:value="${r}" th:text="#{'role.' + ${r.name()}}" th:selected="${r == user.role}"></option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" th:text="#{login.password}"></label>
+                <input type="password" name="password" class="form-control" autocomplete="new-password" th:required="${user.id == null}">
+                <div class="form-text" th:if="${user.id != null}" th:text="#{user.passwordKeep}"></div>
+            </div>
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="active" value="true" id="active" th:checked="${user.active}">
+                    <label class="form-check-label" for="active" th:text="#{common.active}"></label>
+                </div>
+            </div>
+            <div class="col-12"><button class="btn btn-primary"><i class="bi bi-save"></i> <span th:text="#{common.save}"></span></button></div>
+        </form>
+    </div></div>
+</div>
+<script></script>
+</body>
+</html>

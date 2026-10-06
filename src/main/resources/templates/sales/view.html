@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="${sale.invoiceNo}">Sale</title></head>
+<body>
+<div id="content" th:with="s=${sale}">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h4 class="page-title"><span th:text="#{invoice.sale}"></span> <span th:text="${s.invoiceNo}"></span></h4>
+        <span th:replace="~{fragments :: status(${s.status})}"></span>
+        <div class="ms-auto d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-dark" target="_blank" th:href="@{/sales/{id}/print(id=${s.id},format='thermal',auto=true)}"><i class="bi bi-receipt"></i> <span th:text="#{invoice.thermal}"></span></a>
+            <a class="btn btn-outline-dark" target="_blank" th:href="@{/sales/{id}/print(id=${s.id},format='a4',auto=true)}"><i class="bi bi-printer"></i> <span th:text="#{invoice.a4}"></span></a>
+            <a class="btn btn-outline-danger" target="_blank" th:href="@{/sales/{id}/pdf(id=${s.id})}"><i class="bi bi-filetype-pdf"></i> PDF</a>
+            <a class="btn btn-warning" th:if="${s.status.name() != 'RETURNED'}" th:href="@{/sales/{id}/return(id=${s.id})}"><i class="bi bi-arrow-counterclockwise"></i> <span th:text="#{sale.return}"></span></a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead><tr>
+                            <th>#</th><th th:text="#{col.product}"></th><th th:text="#{col.qty}"></th><th th:text="#{col.price}"></th>
+                            <th th:text="#{col.discount}"></th><th th:text="#{col.total}"></th><th th:text="#{col.returned}"></th>
+                        </tr></thead>
+                        <tbody>
+                        <tr th:each="i, st : ${s.items}">
+                            <td th:text="${st.count}"></td>
+                            <td th:text="${i.product.name}"></td>
+                            <td class="num" th:text="${@fmt.qty(i.qty) + ' ' + @fmt.unitName(i.product, i.sellUnit)}"></td>
+                            <td class="num" th:text="${@fmt.money(i.unitPrice)}"></td>
+                            <td class="num" th:text="${@fmt.money(i.discount) + @fmt.pct(i.discountPercent)}"></td>
+                            <td class="num fw-semibold" th:text="${@fmt.money(i.lineTotal)}"></td>
+                            <td class="num text-danger" th:text="${i.returnedQty.signum() > 0 ? @fmt.qty(i.returnedQty) + ' ' + @fmt.unitName(i.product, i.sellUnit) : ''}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card mb-3"><div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5" th:text="#{col.date}"></dt><dd class="col-7 num" th:text="${@fmt.dateTime(s.date)}"></dd>
+                    <dt class="col-5" th:text="#{col.customer}"></dt>
+                    <dd class="col-7">
+                        <a th:if="${s.customer}" th:href="@{/customers/{id}/statement(id=${s.customer.id})}" th:text="${s.customer.name}"></a>
+                        <span th:unless="${s.customer}" th:text="#{pos.walkIn}"></span>
+                    </dd>
+                    <dt class="col-5" th:text="#{col.payment}"></dt><dd class="col-7" th:text="#{'payment.' + ${s.paymentMethod.name()}}"></dd>
+                    <dt class="col-5" th:text="#{col.user}"></dt><dd class="col-7" th:text="${s.user != null ? (s.user.fullName ?: s.user.username) : ''}"></dd>
+                    <dt class="col-5" th:if="${s.notes}" th:text="#{col.notes}"></dt><dd class="col-7" th:if="${s.notes}" th:text="${s.notes}"></dd>
+                </dl>
+            </div></div>
+            <div class="card"><div class="card-body">
+                <div class="d-flex justify-content-between"><span th:text="#{col.subtotal}"></span><span class="num" th:text="${@fmt.money(s.subtotal)}"></span></div>
+                <div class="d-flex justify-content-between" th:if="${s.discount.signum() > 0}"><span th:text="|#{col.discount}${@fmt.pct(s.discountPercent)}|"></span><span class="num" th:text="${@fmt.money(s.discount)}"></span></div>
+                <div class="d-flex justify-content-between" th:if="${s.taxAmount.signum() > 0}"><span th:text="|#{col.tax} (${s.taxRate.stripTrailingZeros().toPlainString()}%)|"></span><span class="num" th:text="${@fmt.money(s.taxAmount)}"></span></div>
+                <hr class="my-2">
+                <div class="d-flex justify-content-between fs-5 fw-bold"><span th:text="#{col.total}"></span><span class="num" th:text="${@fmt.money(s.total)}"></span></div>
+                <div class="d-flex justify-content-between"><span th:text="#{col.paid}"></span><span class="num" th:text="${@fmt.money(s.paid)}"></span></div>
+                <div class="d-flex justify-content-between text-danger" th:if="${s.remaining.signum() > 0}"><span th:text="#{col.remaining}"></span><span class="num" th:text="${@fmt.money(s.remaining)}"></span></div>
+                <div class="d-flex justify-content-between text-warning" th:if="${s.returnedAmount.signum() > 0}"><span th:text="#{col.returns}"></span><span class="num" th:text="${@fmt.money(s.returnedAmount)}"></span></div>
+                <div class="text-center mt-3">
+                    <img th:src="@{/barcode/{c}.png(c=${s.invoiceNo},w=300,h=60)}" style="height:40px" alt="">
+                </div>
+            </div></div>
+        </div>
+    </div>
+</div>
+<script></script>
+</body>
+</html>

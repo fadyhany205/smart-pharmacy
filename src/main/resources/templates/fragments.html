@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Pagination for a Spring Data Page -->
+<nav th:fragment="pager(page)" th:if="${page.totalPages > 1}" class="mt-3">
+    <ul class="pagination pagination-sm justify-content-center flex-wrap mb-0">
+        <li class="page-item" th:classappend="${page.first} ? disabled">
+            <a class="page-link" href="#" th:onclick="|goPage(${page.number - 1}); return false;|">&laquo;</a>
+        </li>
+        <li class="page-item" th:each="i : ${#numbers.sequence(T(java.lang.Math).max(0, page.number - 3), T(java.lang.Math).min(page.totalPages - 1, page.number + 3))}"
+            th:classappend="${i == page.number} ? active">
+            <a class="page-link" href="#" th:onclick="|goPage(${i}); return false;|" th:text="${i + 1}"></a>
+        </li>
+        <li class="page-item" th:classappend="${page.last} ? disabled">
+            <a class="page-link" href="#" th:onclick="|goPage(${page.number + 1}); return false;|">&raquo;</a>
+        </li>
+    </ul>
+    <div class="text-center text-muted small mt-1" th:text="#{common.totalRecords(${page.totalElements})}"></div>
+</nav>
+
+<!-- From / to date filter -->
+<th:block th:fragment="dateFilter(range)">
+    <div class="col-auto">
+        <label class="form-label small mb-0" th:text="#{common.from}"></label>
+        <input type="date" name="from" class="form-control form-control-sm" th:value="${range.from}">
+    </div>
+    <div class="col-auto">
+        <label class="form-label small mb-0" th:text="#{common.to}"></label>
+        <input type="date" name="to" class="form-control form-control-sm" th:value="${range.to}">
+    </div>
+</th:block>
+
+<!-- Invoice status badge -->
+<span th:fragment="status(status)" class="badge"
+      th:classappend="${status.name() == 'COMPLETED'} ? 'text-bg-success' : (${status.name() == 'RETURNED'} ? 'text-bg-danger' : 'text-bg-warning')"
+      th:text="#{'status.' + ${status.name()}}"></span>
+
+<!-- Store header used on printed documents -->
+<div th:fragment="storeHeader" class="d-flex justify-content-between align-items-start border-bottom pb-2 mb-3">
+    <div>
+        <h3 class="fw-bold mb-1" th:text="${settings.storeName}"></h3>
+        <div th:if="${settings.address}" th:text="${settings.address}"></div>
+        <div th:if="${!#strings.isEmpty(settings.phones)}"><span th:text="#{settings.phones}"></span>: <span dir="ltr" th:text="${settings.phones}"></span></div>
+        <div th:if="${settings.email}" th:text="${settings.email}"></div>
+        <div th:if="${settings.taxNumber}"><span th:text="#{settings.taxNumber}"></span>: <span th:text="${settings.taxNumber}"></span></div>
+        <div th:if="${settings.commercialRegister}"><span th:text="#{settings.commercialRegister}"></span>: <span th:text="${settings.commercialRegister}"></span></div>
+    </div>
+    <img th:if="${settings.logoPath}" th:src="${settings.logoPath}" alt="" style="max-height:90px;max-width:160px;object-fit:contain">
+</div>
+
+<!-- System vendor credit: bottom of every screen and on printed reports -->
+<footer th:fragment="vendorFooter" class="vendor-footer text-center small text-muted py-2">
+    <span th:text="#{footer.poweredBy}"></span>
+    <strong th:text="${vendor.name}"></strong>
+    <span class="mx-1">|</span>
+    <a class="text-muted text-decoration-none" dir="ltr" th:href="'tel:' + ${vendor.phone}" th:text="${vendor.phone}"></a>
+</footer>
+
+<!-- Compact vendor credit for printed invoices / receipts -->
+<div th:fragment="vendorLine" class="vendor-line" th:text="#{footer.poweredByLine(${vendor.name}, ${vendor.phone})}"></div>
+
+<!-- Common <head> for standalone print pages -->
+<th:block th:fragment="printHead">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link th:if="${rtl}" rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.rtl.min.css}">
+    <link th:unless="${rtl}" rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</th:block>
+
+<!-- Print toolbar for standalone print pages -->
+<div th:fragment="printToolbar" class="no-print d-flex gap-2 justify-content-center p-2 bg-light border-bottom">
+    <button class="btn btn-primary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> <span th:text="#{common.print}"></span></button>
+    <button class="btn btn-outline-secondary btn-sm" onclick="history.length > 1 ? history.back() : window.close()"><i class="bi bi-arrow-return-left"></i> <span th:text="#{common.back}"></span></button>
+</div>
+
+</body>
+</html>

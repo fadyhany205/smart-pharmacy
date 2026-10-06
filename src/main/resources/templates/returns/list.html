@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{nav.returns}">Returns</title></head>
+<body>
+<div id="content">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h4 class="page-title" th:text="#{nav.returns}"></h4>
+        <ul class="nav nav-pills ms-3">
+            <li class="nav-item"><a class="nav-link" th:classappend="${type == 'sale'} ? active" th:href="@{/returns(type='sale')}" th:text="#{return.salesReturns}"></a></li>
+            <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','MANAGER')"><a class="nav-link" th:classappend="${type == 'purchase'} ? active" th:href="@{/returns(type='purchase')}" th:text="#{return.purchaseReturns}"></a></li>
+        </ul>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-lg-5" th:if="${type == 'sale'}">
+            <div class="card h-100"><div class="card-body">
+                <h6 th:text="#{return.newFromInvoice}"></h6>
+                <form th:action="@{/sales/find}" method="get" class="input-group">
+                    <input type="hidden" name="forReturn" value="true">
+                    <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+                    <input type="text" name="invoiceNo" class="form-control" th:placeholder="#{return.scanInvoice}" required autofocus>
+                    <button class="btn btn-warning" th:text="#{common.search}"></button>
+                </form>
+            </div></div>
+        </div>
+        <div class="col-lg-5" th:if="${type == 'purchase'}">
+            <div class="card h-100"><div class="card-body text-muted small" th:text="#{return.purchaseHelp}"></div></div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card h-100"><div class="card-body">
+                <form class="row g-2 align-items-end" method="get">
+                    <input type="hidden" name="type" th:value="${type}">
+                    <th:block th:replace="~{fragments :: dateFilter(${range})}"/>
+                    <div class="col-auto"><button class="btn btn-dark btn-sm"><i class="bi bi-funnel"></i> <span th:text="#{common.filter}"></span></button></div>
+                </form>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr>
+                    <th th:text="#{return.no}"></th><th th:text="#{col.date}"></th><th th:text="#{return.original}"></th>
+                    <th th:text="${type == 'sale'} ? #{col.customer} : #{col.supplier}"></th>
+                    <th th:text="#{col.total}"></th><th th:text="#{return.settlement}"></th><th th:text="#{return.reason}"></th>
+                </tr></thead>
+                <tbody>
+                <tr th:each="r : ${page.content}">
+                    <td><a class="fw-semibold" th:href="@{/returns/{id}(id=${r.id})}" th:text="${r.returnNo}"></a></td>
+                    <td class="num" th:text="${@fmt.dateTime(r.date)}"></td>
+                    <td th:text="${r.originalNo}"></td>
+                    <td th:text="${r.sale != null ? (r.sale.customer != null ? r.sale.customer.name : #messages.msg('pos.walkIn')) : (r.purchase != null ? r.purchase.supplier.name : '')}"></td>
+                    <td class="num fw-semibold" th:text="${@fmt.money(r.total)}"></td>
+                    <td class="small">
+                        <div th:if="${r.balanceAmount.signum() > 0}"><span th:text="#{return.balancePart}"></span>: <span class="num" th:text="${@fmt.money(r.balanceAmount)}"></span></div>
+                        <div th:if="${r.cashAmount.signum() > 0}"><span th:text="#{return.cashPart}"></span>: <span class="num" th:text="${@fmt.money(r.cashAmount)}"></span></div>
+                    </td>
+                    <td th:text="${r.reason}"></td>
+                </tr>
+                <tr th:if="${page.empty}"><td colspan="7" class="text-center text-muted py-4" th:text="#{common.noData}"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: pager(${page})}"></div>
+</div>
+<script></script>
+</body>
+</html>

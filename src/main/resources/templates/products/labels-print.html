@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}" th:dir="${rtl} ? 'rtl' : 'ltr'">
+<head>
+    <th:block th:replace="~{fragments :: printHead}"/>
+    <title th:text="#{nav.labels}">Labels</title>
+    <style th:inline="css">
+        body { background: #fff; }
+        .label {
+            box-sizing: border-box; overflow: hidden; text-align: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border: 1px dashed #ccc; padding: 1mm; page-break-inside: avoid; break-inside: avoid;
+        }
+        .label .store { font-size: 6pt; line-height: 1.1; }
+        .label .name { font-weight: 700; line-height: 1.1; max-height: 2.3em; overflow: hidden; }
+        .label img { max-width: 100%; }
+        .label .code { font-family: monospace; line-height: 1; }
+        .label .price { font-weight: 800; line-height: 1.1; }
+
+        /* Roll labels: one label per page */
+        .roll .label { page-break-after: always; break-after: page; margin: 0 auto 4px; }
+        .s-38x25 .label { width: 38mm; height: 25mm; }
+        .s-38x25 .name { font-size: 7pt; } .s-38x25 img { height: 9mm; } .s-38x25 .code { font-size: 6.5pt; } .s-38x25 .price { font-size: 9pt; }
+        .s-50x30 .label { width: 50mm; height: 30mm; }
+        .s-50x30 .name { font-size: 8pt; } .s-50x30 img { height: 11mm; } .s-50x30 .code { font-size: 7pt; } .s-50x30 .price { font-size: 10pt; }
+        .s-58x40 .label { width: 58mm; height: 40mm; }
+        .s-58x40 .name { font-size: 9pt; } .s-58x40 img { height: 15mm; } .s-58x40 .code { font-size: 8pt; } .s-58x40 .price { font-size: 12pt; }
+
+        /* A4 sheet: 3 x 8 labels of 70 x 37 mm */
+        .s-a4 { display: grid; grid-template-columns: repeat(3, 70mm); grid-auto-rows: 37mm; width: 210mm; margin: 0 auto; }
+        .s-a4 .label { width: 70mm; height: 37mm; }
+        .s-a4 .name { font-size: 9pt; } .s-a4 img { height: 14mm; } .s-a4 .code { font-size: 8pt; } .s-a4 .price { font-size: 12pt; }
+
+        @media print {
+            .label { border: none; }
+            .roll .label { margin: 0; }
+        }
+    </style>
+    <style th:if="${size == 'a4'}">@page { size: A4; margin: 6mm 0; }</style>
+    <style th:if="${size != 'a4'}" th:utext="|@page { size: ${size == '50x30' ? '50mm 30mm' : (size == '58x40' ? '58mm 40mm' : '38mm 25mm')}; margin: 0; }|"></style>
+</head>
+<body>
+<div th:replace="~{fragments :: printToolbar}"></div>
+<div class="no-print text-center small text-muted p-1" th:text="#{labels.count(${#lists.size(labels)})}"></div>
+
+<div th:class="${size == 'a4'} ? 's-a4' : ('roll s-' + ${size})">
+    <div class="label" th:each="p : ${labels}">
+        <div class="store" th:text="${settings.storeName}"></div>
+        <div class="name" th:if="${showName}" th:text="${p.name}"></div>
+        <img th:src="@{/barcode/{c}.png(c=${p.barcode},w=400,h=120)}" alt="">
+        <div class="code" th:text="${p.barcode}"></div>
+        <div class="price" th:if="${showPrice}"><span th:text="${@fmt.money(p.salePrice)}"></span> <span th:text="${settings.currency}"></span></div>
+    </div>
+</div>
+<script>
+    // Print automatically once all barcode images are loaded.
+    window.addEventListener('load', () => setTimeout(() => window.print(), 300));
+</script>
+</body>
+</html>

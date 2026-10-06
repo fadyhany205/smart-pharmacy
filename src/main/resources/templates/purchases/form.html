@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{nav.newPurchase}">New purchase</title></head>
+<body>
+<div id="content">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="page-title" th:text="#{nav.newPurchase}"></h4>
+    </div>
+
+    <div class="card mb-3"><div class="card-body row g-3">
+        <div class="col-md-4">
+            <label class="form-label" th:text="#{col.supplier}"></label> <span class="text-danger">*</span>
+            <div class="picker">
+                <div class="input-group">
+                    <input id="supplierSearch" type="text" class="form-control" autocomplete="off" th:placeholder="#{purchase.supplierSearchPlaceholder}">
+                    <a class="btn btn-outline-secondary" th:href="@{/suppliers/new}" target="_blank" th:title="#{common.addNew}"><i class="bi bi-plus"></i></a>
+                </div>
+                <div class="picker-list list-group shadow"></div>
+                <input type="hidden" id="supplier">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" th:text="#{purchase.supplierInvoiceNo}"></label>
+            <input id="supplierInvoiceNo" type="text" class="form-control">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" th:text="#{col.date}"></label>
+            <input id="date" type="date" class="form-control" th:value="${today}">
+        </div>
+    </div></div>
+
+    <div class="card mb-3">
+        <div class="card-body pb-2">
+            <div class="picker">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+                    <input id="scan" type="text" class="form-control form-control-lg" autocomplete="off" th:placeholder="#{pos.scanPlaceholder}">
+                    <a class="btn btn-outline-secondary" th:href="@{/products/new}" target="_blank"><i class="bi bi-plus"></i> <span th:text="#{product.new}"></span></a>
+                </div>
+                <div class="picker-list list-group shadow"></div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead><tr>
+                    <th>#</th><th th:text="#{col.product}"></th><th th:text="#{purchase.batchNo}"></th><th th:text="#{purchase.expiry}"></th>
+                    <th th:text="#{purchase.qtyBoxes}"></th><th th:text="#{purchase.bonus}"></th><th th:text="#{purchase.costPerBox}"></th>
+                    <th th:text="#{purchase.lineDiscount}"></th><th th:text="#{product.pricePerBox}"></th><th th:text="#{col.total}"></th><th></th>
+                </tr></thead>
+                <tbody id="lines"></tbody>
+            </table>
+            <div id="empty" class="text-center text-muted py-4" th:text="#{pos.emptyCart}"></div>
+            <div class="small text-muted px-3 pb-2" th:text="#{purchase.expiryHelp}"></div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-7">
+            <div class="card"><div class="card-body">
+                <label class="form-label" th:text="#{col.notes}"></label>
+                <textarea id="notes" class="form-control" rows="3"></textarea>
+            </div></div>
+        </div>
+        <div class="col-md-5">
+            <div class="card"><div class="card-body">
+                <div class="d-flex justify-content-between mb-1"><span th:text="#{col.subtotal}"></span><span class="num" id="subtotal">0.00</span></div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span th:text="#{col.discount}"></span>
+                    <div class="input-group input-group-sm" style="max-width:170px">
+                        <input id="discount" type="number" step="0.01" min="0" class="form-control text-end" value="0">
+                        <button id="discountType" type="button" class="btn btn-outline-secondary" data-pct="false"
+                                th:attr="data-cur=${settings.currency}" th:title="#{discount.toggle}" th:text="${settings.currency}"></button>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between mb-1" th:if="${settings.taxEnabled}">
+                    <span th:text="|#{col.tax} (${#numbers.formatDecimal(settings.taxRate, 1, 0)}%)|"></span><span class="num" id="tax">0.00</span>
+                </div>
+                <div class="d-flex justify-content-between fs-4 fw-bold border-top pt-2 mb-2"><span th:text="#{col.total}"></span><span class="num" id="total">0.00</span></div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span th:text="#{col.paid}"></span>
+                    <input id="paid" type="number" step="0.01" min="0" class="form-control text-end" style="max-width:150px" th:placeholder="#{purchase.paidFull}">
+                </div>
+                <button id="saveBtn" class="btn btn-success btn-lg w-100"><i class="bi bi-save"></i> <span th:text="#{purchase.save}"></span></button>
+            </div></div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const PUR = {
+        taxRate: /*[[${settings.taxEnabled ? settings.taxRate : 0}]]*/ 0,
+        msg: {
+            notFound: /*[[#{pos.notFound('{0}')}]]*/ 'Not found: {0}',
+            empty: /*[[#{error.emptyInvoice}]]*/ 'Empty',
+            supplierRequired: /*[[#{error.supplierRequired}]]*/ 'Supplier required',
+            invalidPercent: /*[[#{error.invalidPercent}]]*/ 'Percent 0-100',
+            expiryRequired: /*[[#{error.expiryRequired('{0}')}]]*/ 'Expiry required for {0}',
+            addBatch: /*[[#{batch.new}]]*/ 'New batch'
+        }
+    };
+</script>
+<script>
+(function () {
+    // {id, name, sci, taxable, qty, bonus, cost, disc, salePrice, batchNo, expiry}  (quantities in boxes)
+    const lines = [];
+    const $ = id => document.getElementById(id);
+    const tbody = $('lines');
+    const invDisc = initDiscountToggle($('discountType'), () => update());
+    const r2 = x => Math.round(x * 100) / 100;
+
+    // Same rules as the server: gross - line discount %, VAT only on taxable lines after the invoice discount share.
+    const lineTotal = l => { const g = r2(l.qty * l.cost); return r2(g - Math.round(g * Math.min(l.disc, 100)) / 100); };
+
+    function totals() {
+        const subtotal = r2(lines.reduce((s, l) => s + lineTotal(l), 0));
+        const taxableLines = r2(lines.filter(l => l.taxable).reduce((s, l) => s + lineTotal(l), 0));
+        const discount = discountAmount(subtotal, $('discount').value, invDisc.isPct());
+        const taxableNet = subtotal === 0 ? 0 : r2(taxableLines * (subtotal - discount) / subtotal);
+        const tax = Math.round(taxableNet * PUR.taxRate) / 100;
+        return { subtotal, discount, tax, total: r2(subtotal - discount + tax) };
+    }
+    function update() {
+        const t = totals();
+        $('subtotal').textContent = money(t.subtotal);
+        if ($('tax')) $('tax').textContent = money(t.tax);
+        $('total').textContent = money(t.total);
+        tbody.querySelectorAll('tr').forEach((tr, i) => tr.children[9].textContent = money(lineTotal(lines[i])));
+    }
+    const inp = (i, f, v, type, w, extra = '') =>
+        `<input type="${type}" ${type === 'number' ? 'step="any" min="0"' : ''} class="form-control form-control-sm" style="width:${w}px" data-i="${i}" data-f="${f}" value="${escapeHtml(v ?? '')}" ${extra}>`;
+    function render() {
+        tbody.innerHTML = lines.map((l, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td><div class="fw-semibold">${escapeHtml(l.name)}</div><small class="text-muted" dir="ltr">${escapeHtml(l.sci || '')}</small></td>
+            <td>${inp(i, 'batchNo', l.batchNo, 'text', 100, 'dir="ltr"')}</td>
+            <td>${inp(i, 'expiry', l.expiry, 'date', 140, l.sci ? 'required' : '')}</td>
+            <td>${inp(i, 'qty', l.qty, 'number', 75)}</td>
+            <td>${inp(i, 'bonus', l.bonus, 'number', 70)}</td>
+            <td>${inp(i, 'cost', l.cost, 'number', 90)}</td>
+            <td>${inp(i, 'disc', l.disc, 'number', 65)}</td>
+            <td>${inp(i, 'salePrice', l.salePrice, 'number', 90)}</td>
+            <td class="num fw-semibold"></td>
+            <td class="text-nowrap">
+              <button type="button" class="btn btn-sm btn-link p-0" data-dup="${i}" title="${escapeHtml(PUR.msg.addBatch)}"><i class="bi bi-plus-square"></i></button>
+              <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1" data-del="${i}"><i class="bi bi-x-lg"></i></button>
+            </td>
+          </tr>`).join('');
+        $('empty').style.display = lines.length ? 'none' : '';
+        update();
+    }
+    function add(p) {
+        const ex = [...lines].reverse().find(l => l.id === p.id);
+        if (ex) ex.qty += 1;
+        else lines.push({ id: p.id, name: p.name, sci: p.scientificName, taxable: p.taxable, qty: 1, bonus: 0,
+                          cost: Number(p.costPrice), disc: 0, salePrice: Number(p.salePrice), batchNo: '', expiry: '' });
+        beep(true);
+        render();
+    }
+    tbody.addEventListener('input', e => {
+        const f = e.target.dataset.f;
+        if (!f) return;
+        const l = lines[+e.target.dataset.i];
+        l[f] = (f === 'batchNo' || f === 'expiry') ? e.target.value : Math.max(0, num(e.target.value));
+        update();
+    });
+    tbody.addEventListener('click', e => {
+        const d = e.target.closest('[data-del]');
+        if (d) { lines.splice(+d.dataset.del, 1); render(); return; }
+        const c = e.target.closest('[data-dup]');
+        if (c) { const l = lines[+c.dataset.dup]; lines.splice(+c.dataset.dup + 1, 0, { ...l, qty: 1, bonus: 0, batchNo: '', expiry: '' }); render(); }
+    });
+    $('discount').addEventListener('input', update);
+    productPicker($('scan'), add, PUR.msg.notFound);
+    partyPicker($('supplierSearch'), $('supplier'), '/api/suppliers/search');
+
+    $('saveBtn').addEventListener('click', async () => {
+        if (!$('supplier').value) { toast(PUR.msg.supplierRequired, 'danger'); return; }
+        if (!lines.length) { toast(PUR.msg.empty, 'danger'); return; }
+        if (invDisc.isPct() && num($('discount').value) > 100) { toast(PUR.msg.invalidPercent, 'danger'); return; }
+        if (lines.some(l => l.disc > 100)) { toast(PUR.msg.invalidPercent, 'danger'); return; }
+        const missing = lines.find(l => l.sci && !l.expiry);
+        if (missing) { toast(PUR.msg.expiryRequired.replace('{0}', missing.name), 'danger'); return; }
+        $('saveBtn').disabled = true;
+        try {
+            const res = await api('/api/purchases', {
+                method: 'POST',
+                body: {
+                    supplierId: $('supplier').value,
+                    supplierInvoiceNo: $('supplierInvoiceNo').value || null,
+                    date: $('date').value || null,
+                    items: lines.map(l => ({ productId: l.id, qty: l.qty, bonusQty: l.bonus, unitCost: l.cost, discountPercent: l.disc,
+                                             batchNo: l.batchNo || null, expiryDate: l.expiry || null, salePrice: l.salePrice })),
+                    discount: totals().discount,
+                    discountPercent: invDisc.isPct() ? num($('discount').value) : null,
+                    paid: $('paid').value === '' ? null : num($('paid').value),
+                    notes: $('notes').value || null
+                }
+            });
+            window.location.href = '/purchases/' + res.id;
+        } catch (e) {
+            toast(e.message, 'danger');
+            $('saveBtn').disabled = false;
+        }
+    });
+    render();
+    $('scan').focus();
+})();
+</script>
+</body>
+</html>

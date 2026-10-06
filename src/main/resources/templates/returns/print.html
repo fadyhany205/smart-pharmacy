@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}" th:dir="${rtl} ? 'rtl' : 'ltr'">
+<head>
+    <th:block th:replace="~{fragments :: printHead}"/>
+    <title th:text="${ret.returnNo}">Return</title>
+    <style>
+        @page { size: 80mm auto; margin: 0; }
+        body { background: #fff; color: #000; }
+        .receipt { width: 72mm; margin: 0 auto; padding: 3mm 0; font-size: 11px; }
+        .receipt table { width: 100%; }
+        .receipt .line { border-top: 1px dashed #000; margin: 4px 0; }
+        .end { text-align: end; }
+    </style>
+</head>
+<body th:with="r=${ret}">
+<div th:replace="~{fragments :: printToolbar}"></div>
+<div class="receipt">
+    <div class="text-center">
+        <h6 class="fw-bold mb-0" th:text="${settings.storeName}"></h6>
+        <div th:if="${!#strings.isEmpty(settings.phones)}" dir="ltr" th:text="${settings.phones}"></div>
+        <div class="fw-bold mt-1" th:text="${r.salesReturn} ? #{return.salesReturn} : #{return.purchaseReturn}"></div>
+    </div>
+    <div class="line"></div>
+    <table>
+        <tr><td th:text="#{return.no}"></td><td class="end fw-bold" th:text="${r.returnNo}"></td></tr>
+        <tr><td th:text="#{return.original}"></td><td class="end" th:text="${r.originalNo}"></td></tr>
+        <tr><td th:text="#{col.date}"></td><td class="end" th:text="${@fmt.dateTime(r.date)}"></td></tr>
+    </table>
+    <div class="line"></div>
+    <table>
+        <tr class="fw-bold"><td th:text="#{col.product}"></td><td class="text-center" th:text="#{col.qty}"></td><td class="end" th:text="#{col.total}"></td></tr>
+        <tr th:each="i : ${r.items}"><td th:text="${i.product.name}"></td><td class="text-center" th:text="${@fmt.qty(i.qty) + ' ' + @fmt.unitName(i.product, i.sellUnit)}"></td><td class="end" th:text="${@fmt.money(i.lineTotal)}"></td></tr>
+    </table>
+    <div class="line"></div>
+    <table>
+        <tr th:if="${r.taxAmount.signum() > 0}"><td th:text="#{col.tax}"></td><td class="end" th:text="${@fmt.money(r.taxAmount)}"></td></tr>
+        <tr class="fw-bold fs-6"><td th:text="#{col.total}"></td><td class="end"><span th:text="${@fmt.money(r.total)}"></span> <span th:text="${settings.currency}"></span></td></tr>
+        <tr th:if="${r.balanceAmount.signum() > 0}"><td th:text="#{return.balancePart}"></td><td class="end" th:text="${@fmt.money(r.balanceAmount)}"></td></tr>
+        <tr th:if="${r.cashAmount.signum() > 0}"><td th:text="#{return.cashPart}"></td><td class="end fw-bold" th:text="${@fmt.money(r.cashAmount)}"></td></tr>
+    </table>
+    <div class="text-center mt-2"><img th:src="@{/barcode/{c}.png(c=${r.returnNo},w=400,h=80)}" style="width:55mm;height:11mm" alt=""></div>
+    <div th:replace="~{fragments :: vendorLine}"></div>
+</div>
+<script>window.addEventListener('load', () => setTimeout(() => window.print(), 250));</script>
+</body>
+</html>

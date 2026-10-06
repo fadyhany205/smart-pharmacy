@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html th:fragment="layout(title, content, scripts)"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:lang="${#locale.language}" th:dir="${rtl} ? 'rtl' : 'ltr'">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:replace="${title}">Store</title>
+    <link th:if="${rtl}" rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.rtl.min.css}">
+    <link th:unless="${rtl}" rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="app d-flex">
+    <!-- ================= Sidebar ================= -->
+    <nav class="sidebar no-print" th:with="p=${currentPath}">
+        <div class="brand d-flex align-items-center gap-2">
+            <img th:if="${settings.logoPath}" th:src="${settings.logoPath}" alt="">
+            <i th:unless="${settings.logoPath}" class="bi bi-capsule-pill fs-4"></i>
+            <span class="text-truncate" th:text="${settings.storeName}">Store</span>
+        </div>
+        <ul class="nav flex-column py-2">
+            <li><a class="nav-link" th:classappend="${p == '/'} ? active" th:href="@{/}"><i class="bi bi-speedometer2"></i><span th:text="#{nav.dashboard}"></span></a></li>
+            <li><a class="nav-link" th:classappend="${p == '/pos'} ? active" th:href="@{/pos}"><i class="bi bi-upc-scan"></i><span th:text="#{nav.pos}"></span></a></li>
+
+            <li class="nav-section" th:text="#{nav.sectionSales}"></li>
+            <li><a class="nav-link" th:classappend="${#strings.startsWith(p,'/sales')} ? active" th:href="@{/sales}"><i class="bi bi-receipt"></i><span th:text="#{nav.sales}"></span></a></li>
+            <li><a class="nav-link" th:classappend="${#strings.startsWith(p,'/returns')} ? active" th:href="@{/returns}"><i class="bi bi-arrow-counterclockwise"></i><span th:text="#{nav.returns}"></span></a></li>
+            <li><a class="nav-link" th:classappend="${#strings.startsWith(p,'/customers')} ? active" th:href="@{/customers}"><i class="bi bi-people"></i><span th:text="#{nav.customers}"></span></a></li>
+
+            <th:block sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+                <li class="nav-section" th:text="#{nav.sectionPurchases}"></li>
+                <li><a class="nav-link" th:classappend="${p == '/purchases/new'} ? active" th:href="@{/purchases/new}"><i class="bi bi-cart-plus"></i><span th:text="#{nav.newPurchase}"></span></a></li>
+                <li><a class="nav-link" th:classappend="${#strings.startsWith(p,'/purchases') and p != '/purchases/new'} ? active" th:href="@{/purchases}"><i class="bi bi-bag"></i><span th:text="#{nav.purchases}"></span></a></li>
+                <li><a class="nav-link" th:classappend="${#strings.startsWith(p,'/suppliers')} ? active" th:href="@{/suppliers}"><i class="bi bi-truck"></i><span th:text="#{nav.suppliers}"></span></a></li>
+            </th:block>
+
+            <li class="nav-section" th:text="#{nav.sectionInventory}"></li>
+            <li><a class="nav-link" th:classappend="${p == '/products' or #strings.startsWith(p,'/products/') and !#strings.startsWith(p,'/products/labels')} ? active" th:href="@{/products}"><i class="bi bi-box-seam"></i><span th:text="#{nav.products}"></span></a></li>
+            <li><a class="nav-link" th:classappend="${#strings.startsWith(p,'/products/labels')} ? active" th:href="@{/products/labels}"><i class="bi bi-upc"></i><span th:text="#{nav.labels}"></span></a></li>
+            <th:block sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+                <li><a class="nav-link" th:classappend="${#strings.startsWith(p,'/categories')} ? active" th:href="@{/categories}"><i class="bi bi-tags"></i><span th:text="#{nav.categories}"></span></a></li>
+                <li><a class="nav-link" th:classappend="${#strings.startsWith(p,'/units')} ? active" th:href="@{/units}"><i class="bi bi-rulers"></i><span th:text="#{nav.units}"></span></a></li>
+                <li><a class="nav-link" th:classappend="${p == '/inventory/expiry'} ? active" th:href="@{/inventory/expiry}"><i class="bi bi-hourglass-split"></i><span th:text="#{nav.expiry}"></span></a></li>
+                <li><a class="nav-link" th:classappend="${p == '/inventory/adjust'} ? active" th:href="@{/inventory/adjust}"><i class="bi bi-sliders"></i><span th:text="#{nav.adjust}"></span></a></li>
+                <li><a class="nav-link" th:classappend="${p == '/inventory/movements'} ? active" th:href="@{/inventory/movements}"><i class="bi bi-arrow-left-right"></i><span th:text="#{nav.movements}"></span></a></li>
+
+                <li class="nav-section" th:text="#{nav.sectionReports}"></li>
+                <li><a class="nav-link" th:classappend="${#strings.startsWith(p,'/reports')} ? active" th:href="@{/reports}"><i class="bi bi-bar-chart"></i><span th:text="#{nav.reports}"></span></a></li>
+            </th:block>
+
+            <th:block sec:authorize="hasRole('ADMIN')">
+                <li class="nav-section" th:text="#{nav.sectionAdmin}"></li>
+                <li><a class="nav-link" th:classappend="${#strings.startsWith(p,'/users')} ? active" th:href="@{/users}"><i class="bi bi-person-gear"></i><span th:text="#{nav.users}"></span></a></li>
+                <li><a class="nav-link" th:classappend="${#strings.startsWith(p,'/settings')} ? active" th:href="@{/settings}"><i class="bi bi-gear"></i><span th:text="#{nav.settings}"></span></a></li>
+            </th:block>
+        </ul>
+    </nav>
+
+    <!-- ================= Main ================= -->
+    <div class="main flex-grow-1 d-flex flex-column">
+        <header class="topbar d-flex align-items-center gap-2 no-print">
+            <button class="btn btn-light d-lg-none" type="button" data-toggle-sidebar><i class="bi bi-list"></i></button>
+            <a class="btn btn-primary btn-sm" th:href="@{/pos}"><i class="bi bi-upc-scan"></i> <span th:text="#{nav.pos}"></span></a>
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn" th:classappend="${rtl} ? 'btn-dark' : 'btn-outline-dark'" onclick="setLang('ar')">عربي</button>
+                    <button type="button" class="btn" th:classappend="${rtl} ? 'btn-outline-dark' : 'btn-dark'" onclick="setLang('en')">English</button>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle"></i> <span sec:authentication="name"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <form th:action="@{/logout}" method="post">
+                                <button class="dropdown-item" type="submit"><i class="bi bi-box-arrow-right"></i> <span th:text="#{nav.logout}"></span></button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <main class="p-3 p-lg-4 flex-grow-1">
+            <div th:if="${success}" class="alert alert-success alert-dismissible auto-hide no-print">
+                <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible no-print">
+                <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <th:block th:replace="${content}"/>
+        </main>
+        <footer th:replace="~{fragments :: vendorFooter}"></footer>
+    </div>
+</div>
+
+<script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/app.js}"></script>
+<th:block th:replace="${scripts}"/>
+</body>
+</html>

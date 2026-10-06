@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}" th:dir="${rtl} ? 'rtl' : 'ltr'">
+<head>
+    <th:block th:replace="~{fragments :: printHead}"/>
+    <title th:text="${purchase.invoiceNo}">Purchase</title>
+    <style>
+        @page { size: A4; margin: 12mm; }
+        body { background: #fff; color: #000; }
+        .sheet { max-width: 190mm; margin: 0 auto; padding: 8mm 0; font-size: 13px; }
+    </style>
+</head>
+<body th:with="p=${purchase}">
+<div th:replace="~{fragments :: printToolbar}"></div>
+<div class="sheet">
+    <div th:replace="~{fragments :: storeHeader}"></div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold mb-0" th:text="#{purchase.invoice}"></h4>
+        <img th:src="@{/barcode/{c}.png(c=${p.invoiceNo},w=400,h=80)}" style="height:45px" alt="">
+    </div>
+    <table class="table table-bordered mb-3">
+        <tr>
+            <td class="bg-light fw-semibold" th:text="#{col.invoiceNo}"></td><td th:text="${p.invoiceNo}"></td>
+            <td class="bg-light fw-semibold" th:text="#{col.date}"></td><td th:text="${@fmt.dateTime(p.date)}"></td>
+        </tr>
+        <tr>
+            <td class="bg-light fw-semibold" th:text="#{col.supplier}"></td><td th:text="${p.supplier.name}"></td>
+            <td class="bg-light fw-semibold" th:text="#{purchase.supplierInvoiceNo}"></td><td th:text="${p.supplierInvoiceNo}"></td>
+        </tr>
+    </table>
+    <table class="table table-bordered table-sm">
+        <thead class="table-dark"><tr>
+            <th>#</th><th th:text="#{col.product}"></th><th th:text="#{col.batchNo}"></th><th th:text="#{col.expiry}"></th>
+            <th class="text-center" th:text="#{col.boxes}"></th><th class="text-center" th:text="#{col.bonus}"></th>
+            <th class="text-center" th:text="#{purchase.costPerBox}"></th><th class="text-center" th:text="#{col.lineDiscountPct}"></th>
+            <th class="text-center" th:text="#{col.total}"></th>
+        </tr></thead>
+        <tbody>
+        <tr th:each="i, st : ${p.items}">
+            <td th:text="${st.count}"></td>
+            <td th:text="${i.product.name}"></td>
+            <td class="small" th:text="${i.batch != null ? (i.batch.batchNo ?: '-') : '-'}"></td>
+            <td class="small" th:text="${i.batch != null and i.batch.expiryDate != null ? @fmt.date(i.batch.expiryDate) : '-'}"></td>
+            <td class="text-center" th:text="${@fmt.qty(i.qty)}"></td>
+            <td class="text-center" th:text="${i.bonusQty.signum() > 0 ? @fmt.qty(i.bonusQty) : ''}"></td>
+            <td class="text-center" th:text="${@fmt.money(i.unitCost)}"></td>
+            <td class="text-center" th:text="${i.discountPercent.signum() > 0 ? i.discountPercent.stripTrailingZeros().toPlainString() + '%' : ''}"></td>
+            <td class="text-center fw-semibold" th:text="${@fmt.money(i.lineTotal)}"></td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="row">
+        <div class="col-7"><div th:if="${p.notes}"><strong th:text="#{col.notes}"></strong>: <span th:text="${p.notes}"></span></div></div>
+        <div class="col-5">
+            <table class="table table-bordered table-sm">
+                <tr><td class="bg-light" th:text="#{col.subtotal}"></td><td class="text-center" th:text="${@fmt.money(p.subtotal)}"></td></tr>
+                <tr th:if="${p.discount.signum() > 0}"><td class="bg-light" th:text="|#{col.discount}${@fmt.pct(p.discountPercent)}|"></td><td class="text-center" th:text="${@fmt.money(p.discount)}"></td></tr>
+                <tr th:if="${p.taxAmount.signum() > 0}"><td class="bg-light" th:text="#{col.tax}"></td><td class="text-center" th:text="${@fmt.money(p.taxAmount)}"></td></tr>
+                <tr class="fw-bold"><td class="bg-light" th:text="#{col.total}"></td><td class="text-center"><span th:text="${@fmt.money(p.total)}"></span> <span th:text="${settings.currency}"></span></td></tr>
+                <tr><td class="bg-light" th:text="#{col.paid}"></td><td class="text-center" th:text="${@fmt.money(p.paid)}"></td></tr>
+                <tr th:if="${p.remaining.signum() > 0}"><td class="bg-light" th:text="#{col.remaining}"></td><td class="text-center fw-bold" th:text="${@fmt.money(p.remaining)}"></td></tr>
+            </table>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: vendorLine}"></div>
+</div>
+</body>
+</html>

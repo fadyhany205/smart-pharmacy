@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{expiry.title}">Expiry</title></head>
+<body>
+<div id="content">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h4 class="page-title"><i class="bi bi-hourglass-split"></i> <span th:text="#{expiry.title}"></span></h4>
+        <div class="ms-auto btn-group">
+            <a th:each="d : ${ {0, 30, 60, 90, 180} }" class="btn" th:classappend="${d == days} ? 'btn-dark' : 'btn-outline-dark'"
+               th:href="@{/inventory/expiry(days=${d})}"
+               th:text="${d == 0} ? #{batch.expired} : |${d} #{expiry.days}|"></a>
+        </div>
+    </div>
+    <div class="alert alert-light border small" th:text="#{expiry.returnToSupplier}"></div>
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr>
+                    <th th:text="#{col.product}"></th><th th:text="#{col.batchNo}"></th><th th:text="#{col.expiry}"></th>
+                    <th th:text="#{col.daysLeft}"></th><th th:text="#{col.stock}"></th><th th:text="#{product.shelfLocation}"></th><th></th>
+                </tr></thead>
+                <tbody>
+                <tr th:each="b : ${batches}" th:classappend="${b.expired} ? 'table-danger' : 'table-warning'"
+                    th:with="left=${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), b.expiryDate)}">
+                    <td>
+                        <a class="fw-semibold" th:href="@{/inventory/batches(productId=${b.product.id})}" th:text="${b.product.name}"></a>
+                        <small class="text-muted d-block" dir="ltr" th:text="${b.product.scientificName}"></small>
+                    </td>
+                    <td class="num" th:text="${b.batchNo ?: '-'}"></td>
+                    <td class="num fw-semibold" th:text="${@fmt.date(b.expiryDate)}"></td>
+                    <td class="num" th:text="${left < 0} ? #{batch.expired} : ${left}"></td>
+                    <td th:text="${@fmt.stock(b.product, b.qty)}"></td>
+                    <td th:text="${b.product.shelfLocation}"></td>
+                    <td class="text-end">
+                        <form th:if="${b.expired}" th:action="@{/inventory/batches/{id}/write-off(id=${b.id})}" method="post"
+                              th:attr="data-confirm=#{expiry.writeOffConfirm}">
+                            <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i> <span th:text="#{expiry.writeOff}"></span></button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(batches)}"><td colspan="7" class="text-center text-muted py-4" th:text="#{common.noData}"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script></script>
+</body>
+</html>

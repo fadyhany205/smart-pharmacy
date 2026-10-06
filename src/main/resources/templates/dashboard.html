@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{nav.dashboard}">Dashboard</title></head>
+<body>
+<div id="content">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="page-title" th:text="#{nav.dashboard}"></h4>
+        <span class="ms-auto text-muted" th:text="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}"></span>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-xl-3">
+            <div class="card stat-card h-100"><div class="card-body d-flex gap-3 align-items-center">
+                <div class="icon bg-primary-subtle text-primary"><i class="bi bi-cash-stack"></i></div>
+                <div>
+                    <div class="text-muted small" th:text="#{dash.todaySales}"></div>
+                    <div class="value num"><span th:text="${@fmt.money(todaySales)}"></span> <small class="fs-6 text-muted" th:text="${settings.currency}"></small></div>
+                    <div class="small text-muted" th:text="#{dash.invoicesCount(${todayCount})}"></div>
+                </div>
+            </div></div>
+        </div>
+        <div class="col-6 col-xl-3" sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+            <div class="card stat-card h-100"><div class="card-body d-flex gap-3 align-items-center">
+                <div class="icon bg-success-subtle text-success"><i class="bi bi-graph-up-arrow"></i></div>
+                <div>
+                    <div class="text-muted small" th:text="#{dash.todayProfit}"></div>
+                    <div class="value num"><span th:text="${@fmt.money(todayProfit)}"></span> <small class="fs-6 text-muted" th:text="${settings.currency}"></small></div>
+                </div>
+            </div></div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="card stat-card h-100"><div class="card-body d-flex gap-3 align-items-center">
+                <div class="icon bg-info-subtle text-info"><i class="bi bi-calendar-month"></i></div>
+                <div>
+                    <div class="text-muted small" th:text="#{dash.monthSales}"></div>
+                    <div class="value num"><span th:text="${@fmt.money(monthSales)}"></span> <small class="fs-6 text-muted" th:text="${settings.currency}"></small></div>
+                </div>
+            </div></div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <a th:href="@{/products(low=true)}" class="text-decoration-none text-body">
+            <div class="card stat-card h-100"><div class="card-body d-flex gap-3 align-items-center">
+                <div class="icon bg-warning-subtle text-warning"><i class="bi bi-exclamation-triangle"></i></div>
+                <div>
+                    <div class="text-muted small" th:text="#{dash.lowStock}"></div>
+                    <div class="value num" th:text="${lowStockCount}"></div>
+                    <div class="small text-muted" th:text="#{dash.ofProducts(${productCount})}"></div>
+                </div>
+            </div></div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <a th:href="@{/inventory/expiry(days=0)}" class="text-decoration-none text-body">
+            <div class="card stat-card h-100" th:classappend="${expiredCount > 0} ? 'border-start border-4 border-danger'"><div class="card-body d-flex gap-3 align-items-center">
+                <div class="icon bg-danger-subtle text-danger"><i class="bi bi-calendar-x"></i></div>
+                <div>
+                    <div class="text-muted small" th:text="#{dash.expired}"></div>
+                    <div class="value num" th:classappend="${expiredCount > 0} ? 'text-danger'" th:text="${expiredCount}"></div>
+                </div>
+            </div></div>
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a th:href="@{/inventory/expiry(days=90)}" class="text-decoration-none text-body">
+            <div class="card stat-card h-100" th:classappend="${nearExpiryCount > 0} ? 'border-start border-4 border-warning'"><div class="card-body d-flex gap-3 align-items-center">
+                <div class="icon bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></div>
+                <div>
+                    <div class="text-muted small" th:text="#{dash.nearExpiry}"></div>
+                    <div class="value num" th:text="${nearExpiryCount}"></div>
+                </div>
+            </div></div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3" sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+        <div class="col-md-6">
+            <div class="card"><div class="card-body d-flex justify-content-between">
+                <span><i class="bi bi-people text-primary"></i> <span th:text="#{dash.receivables}"></span></span>
+                <strong class="num"><span th:text="${@fmt.money(receivables)}"></span> <span th:text="${settings.currency}"></span></strong>
+            </div></div>
+        </div>
+        <div class="col-md-6">
+            <div class="card"><div class="card-body d-flex justify-content-between">
+                <span><i class="bi bi-truck text-danger"></i> <span th:text="#{dash.payables}"></span></span>
+                <strong class="num"><span th:text="${@fmt.money(payables)}"></span> <span th:text="${settings.currency}"></span></strong>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header bg-white fw-semibold" th:text="#{dash.last30}"></div>
+                <div class="card-body"><canvas id="salesChart" height="110"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header bg-white fw-semibold" th:text="#{dash.topProducts}"></div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between" th:each="t, st : ${topProducts}">
+                        <span><span class="badge text-bg-light me-1" th:text="${st.count}"></span><span th:text="${t.name}"></span></span>
+                        <span class="num text-muted" th:text="${t.qty}"></span>
+                    </li>
+                    <li class="list-group-item text-muted text-center" th:if="${#lists.isEmpty(topProducts)}" th:text="#{common.noData}"></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white fw-semibold d-flex">
+                    <span th:text="#{dash.recentSales}"></span>
+                    <a class="ms-auto small" th:href="@{/sales}" th:text="#{common.viewAll}"></a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead><tr>
+                            <th th:text="#{col.invoiceNo}"></th><th th:text="#{col.date}"></th>
+                            <th th:text="#{col.customer}"></th><th th:text="#{col.total}"></th><th></th>
+                        </tr></thead>
+                        <tbody>
+                        <tr th:each="s : ${recentSales}">
+                            <td><a th:href="@{/sales/{id}(id=${s.id})}" th:text="${s.invoiceNo}"></a></td>
+                            <td class="num" th:text="${@fmt.dateTime(s.date)}"></td>
+                            <td th:text="${s.customer != null ? s.customer.name : #messages.msg('pos.walkIn')}"></td>
+                            <td class="num fw-semibold" th:text="${@fmt.money(s.total)}"></td>
+                            <td><span th:replace="~{fragments :: status(${s.status})}"></span></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(recentSales)}"><td colspan="5" class="text-center text-muted" th:text="#{common.noData}"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white fw-semibold d-flex">
+                    <span th:text="#{dash.lowStock}"></span>
+                    <a class="ms-auto small" th:href="@{/products(low=true)}" th:text="#{common.viewAll}"></a>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between" th:each="p : ${lowStock}">
+                        <span th:text="${p.name}"></span>
+                        <span class="badge text-bg-danger" th:text="${@fmt.stock(p)}"></span>
+                    </li>
+                    <li class="list-group-item text-muted text-center" th:if="${#lists.isEmpty(lowStock)}" th:text="#{common.noData}"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/webjars/chart.js/4.4.1/dist/chart.umd.js}"></script>
+<script th:inline="javascript">
+    const labels = /*[[${chartLabels}]]*/ [];
+    const values = /*[[${chartValues}]]*/ [];
+    new Chart(document.getElementById('salesChart'), {
+        type: 'bar',
+        data: { labels, datasets: [{ label: /*[[#{dash.sales}]]*/ 'Sales', data: values, backgroundColor: '#0d6efd', borderRadius: 4 }] },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+</script>
+</body>
+</html>

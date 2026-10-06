@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{${report.titleKey}}">Report</title></head>
+<body>
+<div id="content" th:with="rep=${report}">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3 no-print">
+        <a class="btn btn-light" th:href="@{/reports}"><i class="bi bi-arrow-return-left"></i></a>
+        <h4 class="page-title" th:text="#{${rep.titleKey}}"></h4>
+        <div class="ms-auto d-flex gap-2">
+            <button class="btn btn-outline-dark" onclick="window.print()"><i class="bi bi-printer"></i> <span th:text="#{common.print}"></span></button>
+            <a class="btn btn-outline-danger" target="_blank" th:href="@{/reports/{id}/pdf(id=${def.id},from=${range.from},to=${range.to})}"><i class="bi bi-filetype-pdf"></i> PDF</a>
+            <a class="btn btn-outline-success" th:href="@{/reports/{id}/excel(id=${def.id},from=${range.from},to=${range.to})}"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+        </div>
+    </div>
+
+    <div class="card mb-3 no-print" th:if="${def.dated}"><div class="card-body">
+        <form class="row g-2 align-items-end" method="get">
+            <th:block th:replace="~{fragments :: dateFilter(${range})}"/>
+            <div class="col-auto"><button class="btn btn-dark btn-sm"><i class="bi bi-funnel"></i> <span th:text="#{common.filter}"></span></button></div>
+            <div class="col-auto">
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary" onclick="quickRange(0)" th:text="#{common.today}"></button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="quickRange(7)" th:text="#{common.last7}"></button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="quickRange('month')" th:text="#{common.thisMonth}"></button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="quickRange('year')" th:text="#{common.thisYear}"></button>
+                </div>
+            </div>
+        </form>
+    </div></div>
+
+    <!-- Printed header -->
+    <div class="d-none d-print-block text-center mb-3">
+        <h4 class="fw-bold" th:text="${settings.storeName}"></h4>
+        <h5 th:text="#{${rep.titleKey}}"></h5>
+        <div th:if="${def.dated}" th:text="#{report.period(${range.from}, ${range.to})}"></div>
+    </div>
+
+    <div class="row g-3 mb-3" th:if="${!#lists.isEmpty(rep.summary)}">
+        <div class="col-6 col-md-4 col-xl-3" th:each="s : ${rep.summary}">
+            <div class="card h-100" th:classappend="${s.highlight} ? 'border-start border-4 border-primary'"><div class="card-body">
+                <div class="text-muted small" th:text="#{${s.labelKey}}"></div>
+                <div class="fs-5 fw-bold num" th:text="${@fmt.cell(s.value)}"></div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover table-striped mb-0">
+                <thead><tr><th th:each="h : ${rep.headerKeys}" th:text="#{${h}}"></th></tr></thead>
+                <tbody>
+                <tr th:each="row : ${rowsPage.content}">
+                    <td th:each="c : ${row}" th:classappend="${@fmt.isNum(c)} ? 'num'" th:text="${@fmt.cell(c)}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(rep.rows)}"><td th:colspan="${#lists.size(rep.headerKeys)}" class="text-center text-muted py-4" th:text="#{common.noData}"></td></tr>
+                </tbody>
+                <tfoot th:if="${rep.totals != null and !#lists.isEmpty(rep.rows)}" class="table-dark">
+                <tr>
+                    <th th:each="c, st : ${rep.totals}" class="num" th:text="${st.first} ? #{${c}} : ${@fmt.cell(c)}"></th>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    <div th:if="${rowsPage.totalPages > 1}" class="no-print">
+        <div th:replace="~{fragments :: pager(${rowsPage})}"></div>
+        <div class="text-center small text-muted" th:text="#{report.showingAll(${pageSize})}"></div>
+    </div>
+</div>
+<script>
+    function quickRange(r) {
+        const pad = n => String(n).padStart(2, '0');
+        const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const to = new Date();
+        let from = new Date();
+        if (r === 'month') from = new Date(to.getFullYear(), to.getMonth(), 1);
+        else if (r === 'year') from = new Date(to.getFullYear(), 0, 1);
+        else from.setDate(to.getDate() - r);
+        document.querySelector('input[name=from]').value = fmt(from);
+        document.querySelector('input[name=to]').value = fmt(to);
+        document.querySelector('input[name=from]').form.submit();
+    }
+</script>
+</body>
+</html>

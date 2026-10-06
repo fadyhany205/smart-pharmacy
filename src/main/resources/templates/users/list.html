@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{nav.users}">Users</title></head>
+<body>
+<div id="content">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="page-title" th:text="#{nav.users}"></h4>
+        <a class="btn btn-primary ms-auto" th:href="@{/users/new}"><i class="bi bi-plus-lg"></i> <span th:text="#{common.addNew}"></span></a>
+    </div>
+    <div class="card">
+        <table class="table table-hover mb-0">
+            <thead><tr><th th:text="#{login.username}"></th><th th:text="#{col.name}"></th><th th:text="#{user.role}"></th><th th:text="#{col.status}"></th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="u : ${users}">
+                <td class="fw-semibold" th:text="${u.username}"></td>
+                <td th:text="${u.fullName}"></td>
+                <td><span class="badge text-bg-secondary" th:text="#{'role.' + ${u.role.name()}}"></span></td>
+                <td><span class="badge" th:classappend="${u.active} ? 'text-bg-success' : 'text-bg-danger'" th:text="${u.active} ? #{common.active} : #{common.inactive}"></span></td>
+                <td class="text-end"><a class="btn btn-sm btn-outline-primary" th:href="@{/users/{id}/edit(id=${u.id})}"><i class="bi bi-pencil"></i></a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="card mt-3"><div class="card-body small text-muted">
+        <div><strong th:text="#{role.ADMIN}"></strong>: <span th:text="#{role.ADMIN.help}"></span></div>
+        <div><strong th:text="#{role.MANAGER}"></strong>: <span th:text="#{role.MANAGER.help}"></span></div>
+        <div><strong th:text="#{role.CASHIER}"></strong>: <span th:text="#{role.CASHIER.help}"></span></div>
+    </div></div>
+</div>
+<script></script>
+</body>
+</html>

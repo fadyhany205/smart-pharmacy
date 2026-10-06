@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{purchase.return}">Purchase return</title></head>
+<body>
+<div id="content" th:with="p=${purchase}">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="page-title"><span th:text="#{purchase.return}"></span> - <a th:href="@{/purchases/{id}(id=${p.id})}" th:text="${p.invoiceNo}"></a></h4>
+        <a class="btn btn-light ms-auto" th:href="@{/purchases/{id}(id=${p.id})}"><i class="bi bi-arrow-return-left"></i> <span th:text="#{common.back}"></span></a>
+    </div>
+    <form th:action="@{/purchases/{id}/return(id=${p.id})}" method="post" th:attr="data-confirm=#{return.confirm}">
+        <div class="card mb-3">
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr>
+                        <th th:text="#{col.product}"></th><th th:text="#{col.batchNo}"></th><th th:text="|#{col.boxes} + #{col.bonus}|"></th><th th:text="#{col.unitCost}"></th>
+                        <th th:text="#{col.returned}"></th><th th:text="#{col.stock}"></th><th style="width:160px" th:text="#{return.qtyToReturn}"></th>
+                    </tr></thead>
+                    <tbody>
+                    <tr th:each="i : ${p.items}">
+                        <td th:text="${i.product.name}"></td>
+                        <td class="num small" th:text="${i.batch != null ? (i.batch.batchNo ?: '-') + (i.batch.expiryDate != null ? ' / ' + @fmt.date(i.batch.expiryDate) : '') : '-'}"></td>
+                        <td class="num" th:text="${@fmt.qty(i.totalQty)}"></td>
+                        <td class="num" th:text="${@fmt.money(i.unitCost)}"></td>
+                        <td class="num" th:text="${@fmt.qty(i.returnedQty)}"></td>
+                        <td th:text="${i.batch != null ? @fmt.stock(i.product, i.batch.qty) : @fmt.stock(i.product)}"></td>
+                        <td>
+                            <input type="number" step="any" min="0" class="form-control form-control-sm"
+                                   th:name="'qty_' + ${i.id}" th:max="${i.returnableQty}" value="0"
+                                   th:disabled="${i.returnableQty.signum() <= 0}">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card"><div class="card-body row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label" th:text="#{return.reason}"></label>
+                <input type="text" name="reason" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" th:text="#{return.settlement}"></label>
+                <select name="settlement" class="form-select">
+                    <option value="AUTO" selected th:text="#{settlement.AUTO}"></option>
+                    <option value="BALANCE" th:text="#{return.toSupplierBalance}"></option>
+                    <option value="CASH" th:text="#{return.cashRefundSupplier}"></option>
+                </select>
+            </div>
+            <div class="col-md-3 d-grid">
+                <button class="btn btn-warning"><i class="bi bi-arrow-counterclockwise"></i> <span th:text="#{return.save}"></span></button>
+            </div>
+            <div class="col-12">
+                <div class="alert alert-light border small mb-0">
+                    <div><span th:text="#{return.purchaseOutstanding}"></span>: <strong class="num" th:text="${@fmt.money(outstanding)}"></strong></div>
+                    <div><span th:text="#{return.supplierBalance}"></span>: <strong class="num" th:text="${@fmt.money(p.supplier.balance)}"></strong></div>
+                    <div class="text-muted mt-1" th:text="#{settlement.AUTO.helpSupplier}"></div>
+                </div>
+            </div>
+        </div></div>
+    </form>
+</div>
+<script></script>
+</body>
+</html>

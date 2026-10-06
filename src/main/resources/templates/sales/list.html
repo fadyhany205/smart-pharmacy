@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{nav.sales}">Sales</title></head>
+<body>
+<div id="content">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h4 class="page-title" th:text="#{nav.sales}"></h4>
+        <a class="btn btn-primary ms-auto" th:href="@{/pos}"><i class="bi bi-plus-lg"></i> <span th:text="#{sale.new}"></span></a>
+    </div>
+    <div class="card mb-3"><div class="card-body">
+        <form class="row g-2 align-items-end" method="get">
+            <div class="col-md-4">
+                <label class="form-label small mb-0" th:text="#{common.search}"></label>
+                <input type="text" name="q" class="form-control form-control-sm" th:value="${q}" th:placeholder="#{sale.searchPlaceholder}">
+            </div>
+            <th:block th:replace="~{fragments :: dateFilter(${range})}"/>
+            <div class="col-auto"><button class="btn btn-dark btn-sm"><i class="bi bi-funnel"></i> <span th:text="#{common.filter}"></span></button></div>
+        </form>
+    </div></div>
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr>
+                    <th th:text="#{col.invoiceNo}"></th><th th:text="#{col.date}"></th><th th:text="#{col.customer}"></th>
+                    <th th:text="#{col.payment}"></th><th th:text="#{col.total}"></th><th th:text="#{col.paid}"></th>
+                    <th th:text="#{col.user}"></th><th th:text="#{col.status}"></th><th></th>
+                </tr></thead>
+                <tbody>
+                <tr th:each="s : ${page.content}">
+                    <td><a class="fw-semibold" th:href="@{/sales/{id}(id=${s.id})}" th:text="${s.invoiceNo}"></a></td>
+                    <td class="num" th:text="${@fmt.dateTime(s.date)}"></td>
+                    <td th:text="${s.customer != null ? s.customer.name : #messages.msg('pos.walkIn')}"></td>
+                    <td th:text="#{'payment.' + ${s.paymentMethod.name()}}"></td>
+                    <td class="num fw-semibold" th:text="${@fmt.money(s.total)}"></td>
+                    <td class="num" th:text="${@fmt.money(s.paid)}"></td>
+                    <td th:text="${s.user != null ? s.user.username : ''}"></td>
+                    <td><span th:replace="~{fragments :: status(${s.status})}"></span></td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-dark" target="_blank" th:href="@{/sales/{id}/print(id=${s.id},format='thermal',auto=true)}" th:title="#{invoice.thermal}"><i class="bi bi-receipt"></i></a>
+                        <a class="btn btn-sm btn-outline-dark" target="_blank" th:href="@{/sales/{id}/print(id=${s.id},format='a4',auto=true)}" th:title="#{invoice.a4}"><i class="bi bi-printer"></i></a>
+                        <a class="btn btn-sm btn-outline-danger" target="_blank" th:href="@{/sales/{id}/pdf(id=${s.id})}" title="PDF"><i class="bi bi-filetype-pdf"></i></a>
+                    </td>
+                </tr>
+                <tr th:if="${page.empty}"><td colspan="9" class="text-center text-muted py-4" th:text="#{common.noData}"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: pager(${page})}"></div>
+</div>
+<script></script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{nav.settings}">Settings</title></head>
+<body>
+<div id="content">
+    <h4 class="page-title mb-3" th:text="#{nav.settings}"></h4>
+    <form th:action="@{/settings}" th:object="${settings}" method="post" enctype="multipart/form-data">
+        <div class="row g-3">
+            <!-- ============ Store details ============ -->
+            <div class="col-xl-8">
+                <div class="card h-100">
+                    <div class="card-header bg-white fw-semibold"><i class="bi bi-shop"></i> <span th:text="#{settings.storeDetails}"></span></div>
+                    <div class="card-body row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" th:text="#{settings.storeNameAr}"></label>
+                            <input type="text" th:field="*{storeNameAr}" class="form-control" dir="rtl" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" th:text="#{settings.storeNameEn}"></label>
+                            <input type="text" th:field="*{storeNameEn}" class="form-control" dir="ltr">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" th:text="#{settings.addressAr}"></label>
+                            <input type="text" th:field="*{addressAr}" class="form-control" dir="rtl">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" th:text="#{settings.addressEn}"></label>
+                            <input type="text" th:field="*{addressEn}" class="form-control" dir="ltr">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{settings.mobile1}"></label>
+                            <input type="tel" th:field="*{mobile1}" class="form-control" dir="ltr">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{settings.mobile2}"></label>
+                            <input type="tel" th:field="*{mobile2}" class="form-control" dir="ltr">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{settings.phone}"></label>
+                            <input type="tel" th:field="*{phone}" class="form-control" dir="ltr">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{settings.email}"></label>
+                            <input type="email" th:field="*{email}" class="form-control" dir="ltr">
+                        </div>
+                        <div class="col-md-4" th:if="${showTaxFields}">
+                            <label class="form-label" th:text="#{settings.taxNumber}"></label>
+                            <input type="text" th:field="*{taxNumber}" class="form-control" dir="ltr">
+                        </div>
+                        <div class="col-md-4" th:if="${showTaxFields}">
+                            <label class="form-label" th:text="#{settings.commercialRegister}"></label>
+                            <input type="text" th:field="*{commercialRegister}" class="form-control" dir="ltr">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" th:text="#{settings.footerAr}"></label>
+                            <input type="text" th:field="*{invoiceFooterAr}" class="form-control" dir="rtl">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" th:text="#{settings.footerEn}"></label>
+                            <input type="text" th:field="*{invoiceFooterEn}" class="form-control" dir="ltr">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ Logo ============ -->
+            <div class="col-xl-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white fw-semibold"><i class="bi bi-image"></i> <span th:text="#{settings.logo}"></span></div>
+                    <div class="card-body text-center">
+                        <div class="border rounded d-flex align-items-center justify-content-center mb-3 bg-light" style="height:150px">
+                            <img th:if="*{logoPath}" th:src="*{logoPath}" id="logoPreview" style="max-height:140px;max-width:100%;object-fit:contain" alt="">
+                            <img th:unless="*{logoPath}" id="logoPreview" style="max-height:140px;max-width:100%;object-fit:contain;display:none" alt="">
+                            <i th:unless="*{logoPath}" id="logoPlaceholder" class="bi bi-image display-4 text-muted"></i>
+                        </div>
+                        <input type="file" name="logo" accept="image/*" class="form-control mb-2" id="logoInput">
+                        <div class="form-check text-start" th:if="*{logoPath}">
+                            <input class="form-check-input" type="checkbox" name="removeLogo" value="true" id="removeLogo">
+                            <label class="form-check-label" for="removeLogo" th:text="#{settings.removeLogo}"></label>
+                        </div>
+                        <div class="form-text" th:text="#{settings.logoHelp}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ Configuration ============ -->
+            <div class="col-xl-8">
+                <div class="card">
+                    <div class="card-header bg-white fw-semibold"><i class="bi bi-sliders"></i> <span th:text="#{settings.config}"></span></div>
+                    <div class="card-body row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{settings.currency}"></label>
+                            <input type="text" th:field="*{currency}" class="form-control" maxlength="10" list="currencies" required>
+                            <datalist id="currencies"><option>EGP</option><option>ج.م</option><option>SAR</option><option>AED</option><option>USD</option></datalist>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{settings.defaultLanguage}"></label>
+                            <select th:field="*{defaultLanguage}" class="form-select">
+                                <option value="ar">العربية</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4"></div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mt-md-4">
+                                <input class="form-check-input" type="checkbox" th:field="*{taxEnabled}" onchange="document.getElementById('taxRate').disabled = !this.checked">
+                                <label class="form-check-label fw-semibold" th:for="${#ids.prev('taxEnabled')}" th:text="#{settings.taxEnabled}"></label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{settings.taxRate}"></label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" min="0" max="100" th:field="*{taxRate}" id="taxRate" class="form-control">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="col-12 small text-muted" th:text="#{settings.taxHelp}"></div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold" th:text="#{settings.costMethod}"></label>
+                            <select th:field="*{costMethod}" class="form-select">
+                                <option value="WEIGHTED_AVERAGE" th:text="#{costMethod.WEIGHTED_AVERAGE}"></option>
+                                <option value="LAST_PURCHASE" th:text="#{costMethod.LAST_PURCHASE}"></option>
+                            </select>
+                            <div class="form-text" th:text="#{settings.costMethodHelp}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4">
+                <div class="card">
+                    <div class="card-header bg-white fw-semibold"><i class="bi bi-database"></i> <span th:text="#{settings.backup}"></span></div>
+                    <div class="card-body">
+                        <p class="small text-muted" th:text="#{settings.backupHelp}"></p>
+                        <a class="btn btn-outline-dark w-100" th:href="@{/settings/backup}"><i class="bi bi-download"></i> <span th:text="#{settings.downloadBackup}"></span></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button class="btn btn-primary btn-lg"><i class="bi bi-save"></i> <span th:text="#{common.save}"></span></button>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById('logoInput').addEventListener('change', e => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const img = document.getElementById('logoPreview');
+        img.src = URL.createObjectURL(f);
+        img.style.display = '';
+        const ph = document.getElementById('logoPlaceholder');
+        if (ph) ph.style.display = 'none';
+    });
+    (function () {
+        const cb = document.querySelector('input[name=taxEnabled]');
+        document.getElementById('taxRate').disabled = !cb.checked;
+        // Disabled inputs are not submitted: re-enable just before sending.
+        cb.form.addEventListener('submit', () => document.getElementById('taxRate').disabled = false);
+    })();
+</script>
+</body>
+</html>

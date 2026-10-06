@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{${titleKey}}">Lookups</title></head>
+<body>
+<div id="content">
+    <h4 class="page-title mb-3" th:text="#{${titleKey}}"></h4>
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="card"><div class="card-body">
+                <h6 id="formTitle" th:text="#{common.addNew}"></h6>
+                <form th:action="@{${base} + '/save'}" method="post" id="lookupForm">
+                    <input type="hidden" name="id" id="f-id">
+                    <div class="mb-2">
+                        <label class="form-label" th:text="#{common.nameAr}"></label>
+                        <input type="text" name="nameAr" id="f-ar" class="form-control" dir="rtl" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" th:text="#{common.nameEn}"></label>
+                        <input type="text" name="nameEn" id="f-en" class="form-control" dir="ltr">
+                    </div>
+                    <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> <span th:text="#{common.save}"></span></button>
+                    <button class="btn btn-light" type="reset" onclick="document.getElementById('f-id').value=''" th:text="#{common.cancel}"></button>
+                </form>
+            </div></div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>#</th><th th:text="#{common.nameAr}"></th><th th:text="#{common.nameEn}"></th><th></th></tr></thead>
+                    <tbody>
+                    <tr th:each="it : ${items}">
+                        <td th:text="${it.id}"></td>
+                        <td th:text="${it.nameAr}"></td>
+                        <td th:text="${it.nameEn}"></td>
+                        <td class="text-end text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                    th:attr="data-id=${it.id},data-ar=${it.nameAr},data-en=${it.nameEn}"
+                                    onclick="editLookup(this)"><i class="bi bi-pencil"></i></button>
+                            <form th:action="@{${base} + '/' + ${it.id} + '/delete'}" method="post" class="d-inline" th:attr="data-confirm=#{common.confirmDelete}">
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(items)}"><td colspan="4" class="text-center text-muted" th:text="#{common.noData}"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function editLookup(b) {
+        document.getElementById('f-id').value = b.dataset.id;
+        document.getElementById('f-ar').value = b.dataset.ar || '';
+        document.getElementById('f-en').value = b.dataset.en || '';
+        document.getElementById('f-ar').focus();
+    }
+</script>
+</body>
+</html>

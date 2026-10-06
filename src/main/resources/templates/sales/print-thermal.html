@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}" th:dir="${rtl} ? 'rtl' : 'ltr'">
+<head>
+    <th:block th:replace="~{fragments :: printHead}"/>
+    <title th:text="${sale.invoiceNo}">Receipt</title>
+    <style>
+        @page { size: 80mm auto; margin: 0; }
+        body { background: #fff; color: #000; }
+        .receipt { width: 72mm; margin: 0 auto; padding: 3mm 0; font-size: 11px; line-height: 1.35; }
+        .receipt h1 { font-size: 15px; font-weight: 800; margin: 0; }
+        .receipt table { width: 100%; border-collapse: collapse; }
+        .receipt th, .receipt td { padding: 1px 0; vertical-align: top; }
+        .receipt thead th { border-bottom: 1px dashed #000; font-weight: 700; }
+        .receipt .items td { border-bottom: 1px dotted #999; }
+        .receipt .line { border-top: 1px dashed #000; margin: 4px 0; }
+        .receipt .total { font-size: 15px; font-weight: 800; }
+        .receipt .end { text-align: end; }
+        .receipt img.logo { max-width: 40mm; max-height: 18mm; object-fit: contain; }
+        .receipt img.bc { width: 60mm; height: 12mm; }
+    </style>
+</head>
+<body th:with="s=${sale}">
+<div th:replace="~{fragments :: printToolbar}"></div>
+<div class="receipt">
+    <div class="text-center">
+        <img th:if="${settings.logoPath}" th:src="${settings.logoPath}" class="logo mb-1" alt="">
+        <h1 th:text="${settings.storeName}"></h1>
+        <div th:if="${settings.address}" th:text="${settings.address}"></div>
+        <div th:if="${!#strings.isEmpty(settings.phones)}" dir="ltr" th:text="${settings.phones}"></div>
+        <div th:if="${settings.taxNumber}"><span th:text="#{settings.taxNumber}"></span>: <span th:text="${settings.taxNumber}"></span></div>
+    </div>
+    <div class="line"></div>
+    <div class="text-center fw-bold" th:text="${s.taxAmount.signum() > 0} ? #{invoice.taxInvoice} : #{invoice.sale}"></div>
+    <table>
+        <tr><td th:text="#{col.invoiceNo}"></td><td class="end fw-bold" th:text="${s.invoiceNo}"></td></tr>
+        <tr><td th:text="#{col.date}"></td><td class="end" th:text="${@fmt.dateTime(s.date)}"></td></tr>
+        <tr th:if="${s.customer}"><td th:text="#{col.customer}"></td><td class="end" th:text="${s.customer.name}"></td></tr>
+        <tr th:if="${s.user}"><td th:text="#{col.cashier}"></td><td class="end" th:text="${s.user.fullName ?: s.user.username}"></td></tr>
+    </table>
+    <div class="line"></div>
+    <table class="items">
+        <thead><tr>
+            <th th:text="#{col.product}"></th>
+            <th class="text-center" th:text="#{col.qty}"></th>
+            <th class="text-center" th:text="#{col.price}"></th>
+            <th class="end" th:text="#{col.total}"></th>
+        </tr></thead>
+        <tbody>
+        <tr th:each="i : ${s.items}">
+            <td th:text="${i.product.name}"></td>
+            <td class="text-center" th:text="${@fmt.qty(i.qty) + ' ' + @fmt.unitName(i.product, i.sellUnit)}"></td>
+            <td class="text-center" th:text="${@fmt.money(i.unitPrice)}"></td>
+            <td class="end">
+                <span th:text="${@fmt.money(i.lineTotal)}"></span>
+                <div th:if="${i.discount.signum() > 0}" class="small">(-<span th:text="${@fmt.money(i.discount)}"></span><span th:text="${@fmt.pct(i.discountPercent)}"></span>)</div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="line"></div>
+    <table>
+        <tr><td th:text="#{col.itemsCount}"></td><td class="end" th:text="${#lists.size(s.items)}"></td></tr>
+        <tr><td th:text="#{col.subtotal}"></td><td class="end" th:text="${@fmt.money(s.subtotal)}"></td></tr>
+        <tr th:if="${s.discount.signum() > 0}"><td th:text="|#{col.discount}${@fmt.pct(s.discountPercent)}|"></td><td class="end" th:text="${@fmt.money(s.discount)}"></td></tr>
+        <tr th:if="${s.taxAmount.signum() > 0}"><td th:text="|#{col.tax} (${s.taxRate.stripTrailingZeros().toPlainString()}%)|"></td><td class="end" th:text="${@fmt.money(s.taxAmount)}"></td></tr>
+        <tr class="total"><td th:text="#{col.total}"></td><td class="end"><span th:text="${@fmt.money(s.total)}"></span> <span th:text="${settings.currency}"></span></td></tr>
+        <tr><td th:text="#{col.payment}"></td><td class="end" th:text="#{'payment.' + ${s.paymentMethod.name()}}"></td></tr>
+        <tr th:if="${s.tendered.signum() > 0}"><td th:text="#{pos.paidAmount}"></td><td class="end" th:text="${@fmt.money(s.tendered)}"></td></tr>
+        <tr th:if="${s.change.signum() > 0}"><td th:text="#{pos.change}"></td><td class="end" th:text="${@fmt.money(s.change)}"></td></tr>
+        <tr th:if="${s.remaining.signum() > 0}"><td th:text="#{col.remaining}"></td><td class="end fw-bold" th:text="${@fmt.money(s.remaining)}"></td></tr>
+    </table>
+    <div class="line"></div>
+    <div class="text-center">
+        <img class="bc" th:src="@{/barcode/{c}.png(c=${s.invoiceNo},w=500,h=100)}" alt="">
+        <div th:if="${s.notes}" class="small" th:text="${s.notes}"></div>
+        <div class="fw-bold mt-1" th:text="${settings.invoiceFooter}"></div>
+    </div>
+    <div th:replace="~{fragments :: vendorLine}"></div>
+</div>
+<script th:if="${auto}">
+    window.addEventListener('load', () => setTimeout(() => window.print(), 250));
+</script>
+</body>
+</html>

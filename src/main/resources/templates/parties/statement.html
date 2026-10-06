@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{party.statement}">Statement</title></head>
+<body>
+<div id="content">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3 no-print">
+        <h4 class="page-title"><span th:text="#{party.statement}"></span>: <span th:text="${party.name}"></span></h4>
+        <div class="ms-auto d-flex gap-2">
+            <button class="btn btn-outline-dark" onclick="window.print()"><i class="bi bi-printer"></i> <span th:text="#{common.print}"></span></button>
+            <a class="btn btn-light" th:href="@{${base}}"><i class="bi bi-arrow-return-left"></i> <span th:text="#{common.back}"></span></a>
+        </div>
+    </div>
+
+    <div class="d-none d-print-block">
+        <div th:replace="~{fragments :: storeHeader}"></div>
+        <h5 class="text-center"><span th:text="#{party.statement}"></span>: <span th:text="${party.name}"></span></h5>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card h-100"><div class="card-body">
+                <div class="text-muted small" th:text="#{col.phone}"></div>
+                <div dir="ltr" class="text-start" th:text="${party.phone ?: '-'}"></div>
+                <div class="text-muted small mt-2" th:text="#{col.address}"></div>
+                <div th:text="${party.address ?: '-'}"></div>
+            </div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100"><div class="card-body text-center">
+                <div class="text-muted" th:text="#{party.currentBalance}"></div>
+                <div class="display-6 fw-bold num" th:classappend="${party.balance.signum() > 0} ? 'text-danger' : 'text-success'" th:text="${@fmt.money(party.balance)}"></div>
+                <div class="small text-muted" th:text="${isCustomer} ? #{party.balanceHelpCustomer} : #{party.balanceHelpSupplier}"></div>
+            </div></div>
+        </div>
+        <div class="col-md-4 no-print">
+            <div class="card h-100"><div class="card-body">
+                <h6 th:text="${isCustomer} ? #{party.receivePayment} : #{party.makePayment}"></h6>
+                <form th:action="@{${base} + '/' + ${party.id} + '/payment'}" method="post" class="row g-2">
+                    <div class="col-6"><input type="number" step="0.01" min="0.01" name="amount" class="form-control" th:placeholder="#{col.amount}" required></div>
+                    <div class="col-6">
+                        <select name="method" class="form-select">
+                            <option value="CASH" th:text="#{payment.CASH}"></option>
+                            <option value="CARD" th:text="#{payment.CARD}"></option>
+                        </select>
+                    </div>
+                    <div class="col-12"><input type="text" name="note" class="form-control" th:placeholder="#{col.notes}"></div>
+                    <div class="col-12"><button class="btn btn-success w-100"><i class="bi bi-cash-coin"></i> <span th:text="#{common.save}"></span></button></div>
+                </form>
+
+                <!-- Pay a credit back in cash (customer) / receive it back (supplier). Always visible, enabled only when there is a credit. -->
+                <hr>
+                <h6 class="text-danger" th:text="${isCustomer} ? #{party.payoutToCustomer} : #{party.receiveFromSupplier}"></h6>
+                <div th:if="${party.balance.signum() >= 0}" class="small text-muted"
+                     th:text="${isCustomer} ? #{party.noCustomerCredit} : #{party.noSupplierCredit}"></div>
+                <th:block th:if="${party.balance.signum() < 0}">
+                    <div class="small text-muted mb-2">
+                        <span th:text="${isCustomer} ? #{party.customerCredit} : #{party.supplierCredit}"></span>:
+                        <strong class="num" th:text="${@fmt.money(party.balance.negate())}"></strong>
+                    </div>
+                    <form th:action="@{${base} + '/' + ${party.id} + '/payment'}" method="post" class="row g-2"
+                          th:attr="data-confirm=${isCustomer} ? #{party.payoutConfirm} : #{party.receiveConfirm}">
+                        <input type="hidden" name="refund" value="true">
+                        <div class="col-6"><input type="number" step="0.01" min="0.01" name="amount" class="form-control"
+                                                  th:max="${party.balance.negate()}" th:value="${party.balance.negate()}" required></div>
+                        <div class="col-6">
+                            <select name="method" class="form-select">
+                                <option value="CASH" th:text="#{payment.CASH}"></option>
+                                <option value="CARD" th:text="#{payment.CARD}"></option>
+                            </select>
+                        </div>
+                        <div class="col-12"><input type="text" name="note" class="form-control" th:placeholder="#{col.notes}"></div>
+                        <div class="col-12"><button class="btn btn-outline-danger w-100"><i class="bi bi-cash-stack"></i>
+                            <span th:text="${isCustomer} ? #{party.payoutToCustomer} : #{party.receiveFromSupplier}"></span></button></div>
+                    </form>
+                </th:block>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr>
+                    <th th:text="#{col.date}"></th><th th:text="#{col.description}"></th><th th:text="#{col.reference}"></th>
+                    <th th:text="#{col.debit}"></th><th th:text="#{col.credit}"></th><th th:text="#{col.balance}"></th>
+                </tr></thead>
+                <tbody>
+                <tr th:each="l : ${lines}" th:classappend="${l.date == null} ? 'table-light fw-semibold'">
+                    <td class="num" th:text="${@fmt.dateTime(l.date)}"></td>
+                    <td th:text="#{${l.descriptionKey}}"></td>
+                    <td>
+                        <a th:if="${l.link}" th:href="${l.link}" th:text="${l.refNo}"></a>
+                        <span th:unless="${l.link}" th:text="${l.refNo}"></span>
+                    </td>
+                    <td class="num" th:text="${@fmt.money(l.debit)}"></td>
+                    <td class="num" th:text="${@fmt.money(l.credit)}"></td>
+                    <td class="num fw-semibold" th:text="${@fmt.money(l.balance)}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script></script>
+</body>
+</html>

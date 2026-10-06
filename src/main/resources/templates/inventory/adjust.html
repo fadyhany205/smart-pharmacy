@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{nav.adjust}">Adjust</title></head>
+<body>
+<div id="content">
+    <h4 class="page-title mb-3" th:text="#{nav.adjust}"></h4>
+    <div class="card" style="max-width: 760px"><div class="card-body">
+
+        <!-- Step 1: choose the item (reloads the page with its batches) -->
+        <div th:unless="${product}" class="picker">
+            <label class="form-label" th:text="#{col.product}"></label>
+            <input type="text" id="scan" class="form-control" autocomplete="off" th:placeholder="#{pos.scanPlaceholder}">
+            <div class="picker-list list-group shadow"></div>
+        </div>
+
+        <!-- Step 2: adjust one batch -->
+        <form th:if="${product}" th:action="@{/inventory/adjust}" method="post" class="row g-3">
+            <input type="hidden" name="productId" th:value="${product.id}">
+            <div class="col-12">
+                <div class="alert alert-info py-2 mb-0 d-flex flex-wrap gap-2 align-items-center">
+                    <strong th:text="${product.name}"></strong>
+                    <span>— <span th:text="#{inventory.currentStock}"></span>: <strong th:text="${@fmt.stock(product)}"></strong></span>
+                    <a class="ms-auto small" th:href="@{/inventory/adjust}" th:text="#{common.search}"></a>
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label" th:text="#{inventory.batch}"></label>
+                <select name="batchId" id="batchId" class="form-select">
+                    <option th:each="b : ${batches}" th:value="${b.id}" th:selected="${b.id == batchId}"
+                            th:text="|${b.batchNo ?: '-'} — ${b.expiryDate != null ? @fmt.date(b.expiryDate) : #messages.msg('batch.noExpiry')} — ${@fmt.stock(product, b.qty)}${b.expired ? ' — ' + #messages.msg('batch.expired') : ''}|"></option>
+                    <option value="" th:selected="${#lists.isEmpty(batches)}" th:text="|+ #{batch.new}|"></option>
+                </select>
+                <div class="form-text" th:text="#{inventory.batchHelp}"></div>
+            </div>
+            <div class="col-md-6 new-batch">
+                <label class="form-label" th:text="#{col.batchNo}"></label>
+                <input type="text" name="newBatchNo" class="form-control" dir="ltr">
+            </div>
+            <div class="col-md-6 new-batch">
+                <label class="form-label" th:text="#{col.expiry}"></label>
+                <input type="date" name="newExpiry" class="form-control">
+            </div>
+            <div class="col-md-4 existing-batch">
+                <label class="form-label" th:text="#{inventory.mode}"></label>
+                <select name="mode" class="form-select">
+                    <option value="add" th:text="#{inventory.modeAdd}"></option>
+                    <option value="set" th:text="#{inventory.modeSet}"></option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" th:text="#{col.qty}"></label>
+                <input type="number" step="any" name="qty" class="form-control" required>
+                <div class="form-text existing-batch" th:text="#{inventory.qtyHelp}"></div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" th:text="#{inventory.qtyUnit}"></label>
+                <select name="qtyUnit" class="form-select">
+                    <option th:each="u : ${T(com.pharmacy.entity.SellUnit).values()}" th:if="${product.canSell(u)}"
+                            th:value="${u}" th:text="${@fmt.unitName(product, u)}"></option>
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label" th:text="#{col.notes}"></label>
+                <input type="text" name="note" class="form-control" th:placeholder="#{inventory.notePlaceholder}">
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary"><i class="bi bi-check2"></i> <span th:text="#{common.save}"></span></button>
+                <a class="btn btn-light" th:href="@{/inventory/batches(productId=${product.id})}" th:text="#{nav.batches}"></a>
+            </div>
+        </form>
+    </div></div>
+</div>
+<script th:inline="javascript">
+    const notFoundMsg = /*[[#{pos.notFound('{0}')}]]*/ 'Not found {0}';
+    const scanEl = document.getElementById('scan');
+    if (scanEl) {
+        productPicker(scanEl, p => { window.location.href = '/inventory/adjust?productId=' + p.id; }, notFoundMsg);
+        scanEl.focus();
+    }
+    const batchSel = document.getElementById('batchId');
+    if (batchSel) {
+        const toggle = () => {
+            const isNew = batchSel.value === '';
+            document.querySelectorAll('.new-batch').forEach(e => e.style.display = isNew ? '' : 'none');
+            document.querySelectorAll('.existing-batch').forEach(e => e.style.display = isNew ? 'none' : '');
+        };
+        batchSel.addEventListener('change', toggle);
+        toggle();
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="${isCustomer} ? #{nav.customers} : #{nav.suppliers}">Parties</title></head>
+<body>
+<div id="content">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h4 class="page-title" th:text="${isCustomer} ? #{nav.customers} : #{nav.suppliers}"></h4>
+        <a class="btn btn-primary ms-auto" th:href="@{${base} + '/new'}"><i class="bi bi-plus-lg"></i> <span th:text="#{common.addNew}"></span></a>
+    </div>
+    <div class="card mb-3"><div class="card-body">
+        <form class="row g-2" method="get">
+            <div class="col-md-5"><input type="text" name="q" class="form-control" th:value="${q}" th:placeholder="#{party.searchPlaceholder}"></div>
+            <div class="col-auto"><button class="btn btn-dark"><i class="bi bi-search"></i> <span th:text="#{common.search}"></span></button></div>
+        </form>
+    </div></div>
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr>
+                    <th th:text="#{col.name}"></th><th th:text="#{col.phone}"></th><th th:text="#{col.address}"></th>
+                    <th th:text="#{col.balance}"></th><th></th>
+                </tr></thead>
+                <tbody>
+                <tr th:each="p : ${page.content}">
+                    <td class="fw-semibold" th:text="${p.name}"></td>
+                    <td dir="ltr" class="text-start" th:text="${p.phone}"></td>
+                    <td th:text="${p.address}"></td>
+                    <td class="num fw-semibold" th:classappend="${p.balance.signum() > 0} ? 'text-danger' : (${p.balance.signum() < 0} ? 'text-success')" th:text="${@fmt.money(p.balance)}"></td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-dark" th:href="@{${base} + '/' + ${p.id} + '/statement'}"><i class="bi bi-journal-text"></i> <span th:text="#{party.statement}"></span></a>
+                        <a class="btn btn-sm btn-outline-primary" th:href="@{${base} + '/' + ${p.id} + '/edit'}"><i class="bi bi-pencil"></i></a>
+                        <form th:action="@{${base} + '/' + ${p.id} + '/delete'}" method="post" class="d-inline" th:attr="data-confirm=#{common.confirmDelete}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${page.empty}"><td colspan="5" class="text-center text-muted py-4" th:text="#{common.noData}"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: pager(${page})}"></div>
+</div>
+<script></script>
+</body>
+</html>

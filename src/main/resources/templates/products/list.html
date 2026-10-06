@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{nav.products}">Products</title></head>
+<body>
+<div id="content">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h4 class="page-title" th:text="#{nav.products}"></h4>
+        <div class="ms-auto d-flex gap-2">
+            <a class="btn btn-outline-dark" th:href="@{/products/labels}"><i class="bi bi-upc"></i> <span th:text="#{nav.labels}"></span></a>
+            <a sec:authorize="hasAnyRole('ADMIN','MANAGER')" class="btn btn-outline-primary" th:href="@{/products/import}"><i class="bi bi-cloud-arrow-down"></i> <span th:text="#{import.button}"></span></a>
+            <a sec:authorize="hasAnyRole('ADMIN','MANAGER')" class="btn btn-primary" th:href="@{/products/new}"><i class="bi bi-plus-lg"></i> <span th:text="#{product.new}"></span></a>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <form class="row g-2 align-items-end" method="get">
+                <div class="col-md-5">
+                    <input type="text" name="q" class="form-control" th:value="${q}" th:placeholder="#{product.searchPlaceholder}" autofocus>
+                </div>
+                <div class="col-md-3">
+                    <select name="categoryId" class="form-select">
+                        <option value="" th:text="#{common.allCategories}"></option>
+                        <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}" th:selected="${c.id == categoryId}"></option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="low" value="true" id="low" th:checked="${low}">
+                        <label class="form-check-label" for="low" th:text="#{product.lowOnly}"></label>
+                    </div>
+                </div>
+                <div class="col-auto"><button class="btn btn-dark"><i class="bi bi-search"></i> <span th:text="#{common.search}"></span></button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr>
+                    <th></th>
+                    <th th:text="#{col.product}"></th>
+                    <th th:text="#{col.barcode}"></th>
+                    <th th:text="#{col.category}"></th>
+                    <th sec:authorize="hasAnyRole('ADMIN','MANAGER')" th:text="#{col.costPrice}"></th>
+                    <th th:text="#{product.pricePerBox}"></th>
+                    <th th:text="#{col.stock}"></th>
+                    <th></th>
+                </tr></thead>
+                <tbody>
+                <tr th:each="p : ${page.content}" th:classappend="${!p.active} ? 'opacity-50'">
+                    <td>
+                        <img th:if="${p.imagePath}" th:src="${p.imagePath}" class="product-thumb" alt="">
+                        <div th:unless="${p.imagePath}" class="product-thumb d-flex align-items-center justify-content-center text-muted"><i class="bi bi-box"></i></div>
+                    </td>
+                    <td>
+                        <div class="fw-semibold" th:text="${p.name}"></div>
+                        <small class="text-muted d-block" dir="ltr" th:if="${p.scientificName}"
+                               th:text="${p.scientificName + (p.strength != null ? ' ' + p.strength : '') + (p.dosageForm != null ? ' - ' + p.dosageForm : '')}"></small>
+                        <span th:if="${p.prescriptionRequired}" class="badge text-bg-danger" th:text="#{product.rx}"></span>
+                        <span th:if="${p.needsFridge}" class="badge text-bg-info"><i class="bi bi-snow"></i> <span th:text="#{product.fridge}"></span></span>
+                        <span th:if="${p.taxable}" class="badge text-bg-warning" th:text="#{pos.taxableItem}"></span>
+                        <span th:unless="${p.active}" class="badge text-bg-secondary" th:text="#{common.inactive}"></span>
+                    </td>
+                    <td>
+                        <img class="barcode-img d-block" th:src="@{/barcode/{c}.png(c=${p.barcode},w=220,h=50)}" alt="" loading="lazy">
+                        <small class="num" th:text="${p.barcode}"></small>
+                    </td>
+                    <td th:text="${p.category != null ? p.category.name : '-'}"></td>
+                    <td sec:authorize="hasAnyRole('ADMIN','MANAGER')" class="num" th:text="${@fmt.money(p.costPrice)}"></td>
+                    <td class="num fw-semibold" th:text="${@fmt.money(p.salePrice)}"></td>
+                    <td>
+                        <span class="badge" th:classappend="${p.lowStock} ? 'text-bg-danger' : 'text-bg-success'" th:text="${@fmt.stock(p)}"></span>
+                        <small class="text-muted d-block" th:if="${p.shelfLocation}"><i class="bi bi-geo-alt"></i> <span th:text="${p.shelfLocation}"></span></small>
+                    </td>
+                    <td class="text-nowrap text-end">
+                        <a class="btn btn-sm btn-outline-dark" th:href="@{/products/labels/print(productId=${p.id},copies=1)}" target="_blank" th:title="#{product.printLabel}"><i class="bi bi-upc"></i></a>
+                        <th:block sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+                            <a class="btn btn-sm btn-outline-success" th:href="@{/inventory/batches(productId=${p.id})}" th:title="#{nav.batches}"><i class="bi bi-layers"></i></a>
+                            <a class="btn btn-sm btn-outline-secondary" th:href="@{/inventory/movements(productId=${p.id})}" th:title="#{nav.movements}"><i class="bi bi-clock-history"></i></a>
+                            <a class="btn btn-sm btn-outline-primary" th:href="@{/products/{id}/edit(id=${p.id})}" th:title="#{common.edit}"><i class="bi bi-pencil"></i></a>
+                            <form th:action="@{/products/{id}/delete(id=${p.id})}" method="post" class="d-inline" th:attr="data-confirm=#{common.confirmDelete}">
+                                <button class="btn btn-sm btn-outline-danger" th:title="#{common.delete}"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </th:block>
+                    </td>
+                </tr>
+                <tr th:if="${page.empty}"><td colspan="8" class="text-center text-muted py-4" th:text="#{common.noData}"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: pager(${page})}"></div>
+</div>
+<script></script>
+</body>
+</html>

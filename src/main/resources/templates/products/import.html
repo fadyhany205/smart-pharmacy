@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{import.title}">Import</title></head>
+<body>
+<div id="content">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="page-title"><i class="bi bi-cloud-arrow-down"></i> <span th:text="#{import.title}"></span></h4>
+        <a class="btn btn-light ms-auto" th:href="@{/products}"><i class="bi bi-arrow-return-left"></i> <span th:text="#{common.back}"></span></a>
+    </div>
+
+    <!-- ===== Progress / result of the current import ===== -->
+    <div class="card mb-3" th:if="${job}" id="jobCard" th:attr="data-job=${job.id}">
+        <div class="card-body">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                <strong th:text="${job.fileName}"></strong>
+                <span class="badge text-bg-secondary" id="jFormat"></span>
+                <span class="badge text-bg-warning" th:if="${job.options.dryRun()}" th:text="#{import.dryRunBadge}"></span>
+                <span class="ms-auto small text-muted"><span id="jSeconds">0</span> s</span>
+            </div>
+            <div class="progress mb-3" style="height: 22px">
+                <div id="jBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%">0%</div>
+            </div>
+            <div id="jMessage" class="alert d-none py-2"></div>
+            <div class="row g-2 text-center" id="jStats">
+                <div class="col-6 col-md-3"><div class="border rounded p-2"><div class="small text-muted" th:text="#{import.processed}"></div><div class="fs-5 fw-bold num" id="jProcessed">0</div></div></div>
+                <div class="col-6 col-md-3"><div class="border rounded p-2"><div class="small text-muted" th:text="#{import.created}"></div><div class="fs-5 fw-bold num text-success" id="jCreated">0</div></div></div>
+                <div class="col-6 col-md-3"><div class="border rounded p-2"><div class="small text-muted" th:text="#{import.updated}"></div><div class="fs-5 fw-bold num text-primary" id="jUpdated">0</div></div></div>
+                <div class="col-6 col-md-3"><div class="border rounded p-2"><div class="small text-muted" th:text="#{import.skipped}"></div><div class="fs-5 fw-bold num text-secondary" id="jSkipped">0</div></div></div>
+            </div>
+            <div class="small text-muted mt-2" id="jDetails"></div>
+            <ul class="small text-danger mt-2 mb-0" id="jErrors"></ul>
+            <div class="mt-3 d-none" id="jDone">
+                <a class="btn btn-primary" th:href="@{/products}"><i class="bi bi-capsule"></i> <span th:text="#{nav.products}"></span></a>
+                <a class="btn btn-outline-secondary" th:href="@{/products/import}" th:text="#{import.another}"></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== New import ===== -->
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <form class="card" th:action="@{/products/import}" method="post" enctype="multipart/form-data">
+                <div class="card-body row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold" th:text="#{import.file}"></label>
+                        <input type="file" name="file" accept=".csv,.json" class="form-control" required>
+                        <div class="form-text" th:text="#{import.fileHelp}"></div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="updateExisting" value="true" id="upd" checked>
+                            <label class="form-check-label" for="upd" th:text="#{import.updateExisting}"></label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="updatePrices" value="true" id="updp" checked>
+                            <label class="form-check-label" for="updp" th:text="#{import.updatePrices}"></label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="skipNoPrice" value="true" id="skp" checked>
+                            <label class="form-check-label" for="skp" th:text="#{import.skipNoPrice}"></label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="guessStrips" value="true" id="gs" checked>
+                            <label class="form-check-label" for="gs" th:text="#{import.guessStrips}"></label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" th:text="#{import.costPercent}"></label>
+                        <div class="input-group">
+                            <input type="number" name="costPercent" min="0" max="100" step="0.1" class="form-control" placeholder="80">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text" th:text="#{import.costPercentHelp}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" th:text="#{import.taxableGroups}"></label>
+                        <div th:each="g : ${groups}" class="form-check">
+                            <input class="form-check-input" type="checkbox" name="taxableGroups" th:value="${g}" th:id="|tg${g}|"
+                                   th:checked="${g.name() == 'COSMETICS'}">
+                            <label class="form-check-label" th:for="|tg${g}|" th:text="${rtl ? g.ar : g.en}"></label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="dryRun" value="true" id="dry">
+                            <label class="form-check-label fw-semibold" for="dry" th:text="#{import.dryRun}"></label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-primary btn-lg" th:disabled="${job != null and job.status.name() == 'RUNNING'}">
+                            <i class="bi bi-cloud-arrow-up"></i> <span th:text="#{import.start}"></span></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-lg-5">
+            <div class="card h-100"><div class="card-body small">
+                <h6 th:text="#{import.howTitle}"></h6>
+                <div class="mb-2"><strong th:text="#{import.supported}"></strong>
+                    <ul class="mb-2"><li th:each="f : ${formats}" th:text="${f}"></li></ul>
+                </div>
+                <ul class="ps-3 mb-0">
+                    <li th:text="#{import.how1}"></li>
+                    <li th:text="#{import.how2}"></li>
+                    <li th:text="#{import.how3}"></li>
+                    <li th:text="#{import.how4}"></li>
+                    <li th:text="#{import.how5}"></li>
+                </ul>
+            </div></div>
+        </div>
+    </div>
+</div>
+<script th:inline="javascript">
+    const IMP = {
+        created: /*[[#{import.created}]]*/ 'Created',
+        details: /*[[#{import.details}]]*/ '',
+        done: /*[[#{import.doneMsg}]]*/ 'Done',
+        dryDone: /*[[#{import.dryDoneMsg}]]*/ 'Trial run done',
+        failed: /*[[#{import.error.failed}]]*/ 'Failed'
+    };
+</script>
+<script>
+(function () {
+    const card = document.getElementById('jobCard');
+    if (!card) return;
+    const $ = id => document.getElementById(id);
+    const n = v => Number(v || 0).toLocaleString('en-US');
+    async function poll() {
+        let s;
+        try { s = await api('/products/import/status/' + card.dataset.job); } catch (e) { setTimeout(poll, 2000); return; }
+        $('jFormat').textContent = s.format || '';
+        $('jSeconds').textContent = s.seconds;
+        $('jBar').style.width = s.percent + '%';
+        $('jBar').textContent = s.percent + '% (' + n(s.processed) + ' / ' + n(s.total) + ')';
+        $('jProcessed').textContent = n(s.processed);
+        $('jCreated').textContent = n(s.created);
+        $('jUpdated').textContent = n(s.updated);
+        $('jSkipped').textContent = n(s.skippedExisting + s.skippedNoPrice + s.skippedInvalid);
+        $('jDetails').textContent = IMP.details
+            .replace('{0}', n(s.skippedNoPrice)).replace('{1}', n(s.skippedExisting)).replace('{2}', n(s.skippedInvalid))
+            .replace('{3}', n(s.barcodesFromFile)).replace('{4}', n(s.barcodesGenerated)).replace('{5}', n(s.duplicateBarcodes))
+            .replace('{6}', n(s.categoriesCreated)).replace('{7}', n(s.unitsCreated));
+        $('jErrors').innerHTML = (s.errors || []).map(e => '<li>' + escapeHtml(e) + '</li>').join('');
+        if (s.status === 'RUNNING') { setTimeout(poll, 1000); return; }
+        $('jBar').classList.remove('progress-bar-animated', 'progress-bar-striped');
+        const ok = s.status === 'DONE';
+        $('jBar').classList.add(ok ? 'bg-success' : 'bg-danger');
+        const msg = $('jMessage');
+        msg.classList.remove('d-none');
+        msg.classList.add(ok ? 'alert-success' : 'alert-danger');
+        msg.textContent = ok ? (s.dryRun ? IMP.dryDone : IMP.done) : (s.message || IMP.failed);
+        $('jDone').classList.remove('d-none');
+    }
+    poll();
+})();
+</script>
+</body>
+</html>

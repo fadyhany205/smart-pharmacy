@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="${product.id == null} ? #{product.new} : #{product.edit}">Product</title></head>
+<body>
+<div id="content">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="page-title" th:text="${product.id == null} ? #{product.new} : #{product.edit}"></h4>
+        <a class="btn btn-light ms-auto" th:href="@{/products}"><i class="bi bi-arrow-return-left"></i> <span th:text="#{common.back}"></span></a>
+    </div>
+
+    <form th:action="@{/products/save}" th:object="${product}" method="post" enctype="multipart/form-data"
+          th:with="hasStock=${product.id != null and product.stockQty.signum() != 0}">
+        <input type="hidden" th:field="*{id}">
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <!-- ===== Names / medicine details ===== -->
+                <div class="card mb-3">
+                    <div class="card-header bg-white fw-semibold"><i class="bi bi-capsule"></i> <span th:text="#{product.medicine}"></span></div>
+                    <div class="card-body row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" th:text="#{product.nameAr}"></label> <span class="text-danger">*</span>
+                            <input type="text" th:field="*{nameAr}" class="form-control" dir="rtl" required autofocus>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" th:text="#{product.nameEn}"></label>
+                            <input type="text" th:field="*{nameEn}" class="form-control" dir="ltr">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" th:text="#{product.scientificName}"></label>
+                            <input type="text" th:field="*{scientificName}" class="form-control" dir="ltr" placeholder="Paracetamol">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" th:text="#{product.strength}"></label>
+                            <input type="text" th:field="*{strength}" class="form-control" dir="ltr" placeholder="500mg">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" th:text="#{product.dosageForm}"></label>
+                            <input type="text" th:field="*{dosageForm}" class="form-control" list="dosageForms">
+                            <datalist id="dosageForms">
+                                <option>أقراص</option><option>كبسولات</option><option>شراب</option><option>معلق</option>
+                                <option>حقن</option><option>نقط</option><option>كريم</option><option>مرهم</option>
+                                <option>جل</option><option>بخاخ</option><option>لبوس</option><option>أكياس</option>
+                            </datalist>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" th:text="#{product.manufacturer}"></label>
+                            <input type="text" th:field="*{manufacturer}" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" th:text="#{col.category}"></label>
+                            <select th:field="*{category.id}" class="form-select">
+                                <option value="">-</option>
+                                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" th:text="#{col.barcode}"></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+                                <input type="text" th:field="*{barcode}" class="form-control" dir="ltr" th:placeholder="#{product.barcodeAuto}">
+                            </div>
+                            <div class="form-text" th:text="#{product.barcodeHelp}"></div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" th:text="#{col.sku}"></label>
+                            <input type="text" th:field="*{sku}" class="form-control" dir="ltr">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" th:text="#{product.shelfLocation}"></label>
+                            <input type="text" th:field="*{shelfLocation}" class="form-control">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== Pack structure and prices ===== -->
+                <div class="card mb-3">
+                    <div class="card-header bg-white fw-semibold"><i class="bi bi-box"></i> <span th:text="#{product.pack}"></span></div>
+                    <div class="card-body row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{product.stripsPerBox}"></label>
+                            <input type="number" min="1" step="1" th:field="*{stripsPerBox}" id="strips" class="form-control" th:readonly="${hasStock}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{product.unitsPerStrip}"></label>
+                            <input type="number" min="1" step="1" th:field="*{unitsPerStrip}" id="perStrip" class="form-control" th:readonly="${hasStock}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{product.smallestUnit}"></label>
+                            <select th:field="*{unit.id}" class="form-select">
+                                <option value="">-</option>
+                                <option th:each="u : ${units}" th:value="${u.id}" th:text="${u.name}"></option>
+                            </select>
+                        </div>
+                        <div class="col-12 form-text mt-0" th:text="#{product.packHelp}"></div>
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{product.costPerBox}"></label>
+                            <input type="number" step="0.01" min="0" th:field="*{costPrice}" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{product.pricePerBox}"></label> <span class="text-danger">*</span>
+                            <input type="number" step="0.01" min="0" th:field="*{salePrice}" id="boxPrice" class="form-control" required>
+                            <div class="form-text"><span th:text="#{product.perStrip}"></span>: <strong id="stripPrice" class="num">-</strong>
+                                | <span th:text="#{product.perUnit}"></span>: <strong id="unitPrice" class="num">-</strong></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" th:text="#{product.minStockBoxes}"></label>
+                            <input type="number" step="any" min="0" th:field="*{minStock}" class="form-control">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== Opening stock (new) / current stock ===== -->
+                <div class="card">
+                    <div class="card-body row g-3">
+                        <th:block th:if="${product.id == null}">
+                            <div class="col-md-4">
+                                <label class="form-label" th:text="#{product.openingQtyBoxes}"></label>
+                                <input type="number" step="any" min="0" name="openingQty" class="form-control" value="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" th:text="#{product.openingBatch}"></label>
+                                <input type="text" name="openingBatch" class="form-control" dir="ltr">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" th:text="#{product.openingExpiry}"></label>
+                                <input type="date" name="openingExpiry" class="form-control">
+                            </div>
+                        </th:block>
+                        <div class="col-md-6" th:if="${product.id != null}">
+                            <label class="form-label" th:text="#{col.stock}"></label>
+                            <div class="form-control-plaintext fw-bold">
+                                <span th:text="${@fmt.stock(product)}"></span>
+                                <a class="small ms-2" th:href="@{/inventory/batches(productId=${product.id})}" th:text="#{nav.batches}"></a>
+                                <a class="small ms-2" th:href="@{/inventory/adjust(productId=${product.id})}" th:text="#{nav.adjust}"></a>
+                            </div>
+                        </div>
+                        <div class="col-12 d-flex flex-wrap gap-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" th:field="*{prescriptionRequired}">
+                                <label class="form-check-label" th:for="${#ids.prev('prescriptionRequired')}" th:text="#{product.prescriptionRequired}"></label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" th:field="*{needsFridge}">
+                                <label class="form-check-label" th:for="${#ids.prev('needsFridge')}" th:text="#{product.needsFridge}"></label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" th:field="*{taxable}">
+                                <label class="form-check-label" th:for="${#ids.prev('taxable')}" th:text="#{product.taxable}"></label>
+                                <div class="form-text mt-0" th:text="#{product.taxableHelp}"></div>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" th:field="*{active}">
+                                <label class="form-check-label" th:for="${#ids.prev('active')}" th:text="#{common.active}"></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-3"><div class="card-body text-center">
+                    <label class="form-label d-block" th:text="#{product.image}"></label>
+                    <img th:if="${product.imagePath}" th:src="${product.imagePath}" class="img-fluid rounded mb-2" style="max-height:160px" alt="">
+                    <input type="file" name="image" accept="image/*" class="form-control">
+                </div></div>
+                <div class="card mb-3" th:if="${product.therapeuticClass != null or product.uses != '' or product.warnings != '' or !#lists.isEmpty(product.warnFlagList)}">
+                    <div class="card-body small">
+                        <div th:if="${product.therapeuticClass}" class="mb-2"><strong th:text="#{product.therapeuticClass}"></strong>:
+                            <span dir="ltr" th:text="${product.therapeuticClass}"></span></div>
+                        <div th:if="${!#lists.isEmpty(product.warnFlagList)}" class="mb-2">
+                            <span th:each="w : ${product.warnFlagList}" class="badge text-bg-danger me-1"><i class="bi bi-exclamation-triangle"></i> <span th:text="#{'warn.' + ${w}}"></span></span>
+                        </div>
+                        <div th:if="${product.uses != ''}" class="mb-2"><strong th:text="#{product.uses}"></strong>: <span th:text="${product.uses}"></span></div>
+                        <div th:if="${product.warnings != ''}" class="text-danger"><strong th:text="#{product.warningsInfo}"></strong>: <span th:text="${product.warnings}"></span></div>
+                    </div>
+                </div>
+                <div class="card mb-3" th:if="${product.barcode}"><div class="card-body text-center">
+                    <img th:src="@{/barcode/{c}.png(c=${product.barcode},w=320,h=90)}" class="img-fluid" alt="">
+                    <div class="num" th:text="${product.barcode}"></div>
+                    <a class="btn btn-sm btn-outline-dark mt-2" target="_blank" th:href="@{/products/labels/print(productId=${product.id},copies=1)}">
+                        <i class="bi bi-printer"></i> <span th:text="#{product.printLabel}"></span></a>
+                </div></div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary btn-lg" type="submit"><i class="bi bi-save"></i> <span th:text="#{common.save}"></span></button>
+                    <button class="btn btn-outline-primary" type="submit" name="saveAndNew" value="true" th:if="${product.id == null}"><i class="bi bi-plus-lg"></i> <span th:text="#{common.saveAndNew}"></span></button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    // Live strip / unit prices from the box price and the pack structure.
+    (function () {
+        const $ = id => document.getElementById(id);
+        const r2 = x => (Math.round(x * 100) / 100).toFixed(2);
+        function update() {
+            const box = parseFloat($('boxPrice').value) || 0;
+            const s = Math.max(1, parseInt($('strips').value) || 1), u = Math.max(1, parseInt($('perStrip').value) || 1);
+            $('stripPrice').textContent = s > 1 && u > 1 ? r2(box / s) : '-';
+            $('unitPrice').textContent = s * u > 1 ? r2(box / (s * u)) : '-';
+        }
+        ['boxPrice', 'strips', 'perStrip'].forEach(id => $(id).addEventListener('input', update));
+        update();
+    })();
+</script>
+</body>
+</html>

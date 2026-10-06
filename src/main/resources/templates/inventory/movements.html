@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{nav.movements}">Movements</title></head>
+<body>
+<div id="content">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h4 class="page-title">
+            <span th:text="#{nav.movements}"></span>
+            <span th:if="${product}"> - <span th:text="${product.name}"></span>
+                (<span th:text="#{inventory.currentStock}"></span>: <span th:text="${@fmt.stock(product)}"></span>)</span>
+        </h4>
+        <a class="btn btn-primary ms-auto" th:href="@{/inventory/adjust(productId=${productId})}"><i class="bi bi-sliders"></i> <span th:text="#{nav.adjust}"></span></a>
+    </div>
+    <div class="card mb-3"><div class="card-body">
+        <form class="row g-2 align-items-end" method="get">
+            <input type="hidden" name="productId" th:value="${productId}">
+            <th:block th:replace="~{fragments :: dateFilter(${range})}"/>
+            <div class="col-auto"><button class="btn btn-dark btn-sm"><i class="bi bi-funnel"></i> <span th:text="#{common.filter}"></span></button></div>
+            <div class="col-auto" th:if="${productId}"><a class="btn btn-link btn-sm" th:href="@{/inventory/movements}" th:text="#{inventory.allProducts}"></a></div>
+        </form>
+    </div></div>
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr>
+                    <th th:text="#{col.date}"></th><th th:text="#{col.product}"></th><th th:text="#{col.type}"></th>
+                    <th th:text="#{col.qty}"></th><th th:text="#{inventory.balanceAfter}"></th><th th:text="#{col.batchNo}"></th><th th:text="#{col.reference}"></th>
+                    <th th:text="#{col.notes}"></th><th th:text="#{col.user}"></th>
+                </tr></thead>
+                <tbody>
+                <tr th:each="m : ${page.content}">
+                    <td class="num" th:text="${@fmt.dateTime(m.date)}"></td>
+                    <td><a th:href="@{/inventory/movements(productId=${m.product.id})}" th:text="${m.product.name}"></a></td>
+                    <td th:text="#{'movement.' + ${m.type.name()}}"></td>
+                    <td class="num fw-semibold" th:classappend="${m.qty.signum() > 0} ? 'text-success' : 'text-danger'"
+                        th:text="${(m.qty.signum() > 0 ? '+' : '') + @fmt.stock(m.product, m.qty)}"></td>
+                    <td th:text="${@fmt.stock(m.product, m.balanceAfter)}"></td>
+                    <td class="num small" th:text="${m.batch != null ? (m.batch.batchNo ?: '-') + (m.batch.expiryDate != null ? ' / ' + @fmt.date(m.batch.expiryDate) : '') : ''}"></td>
+                    <td th:text="${m.refNo}"></td>
+                    <td th:text="${m.note}"></td>
+                    <td th:text="${m.user != null ? m.user.username : ''}"></td>
+                </tr>
+                <tr th:if="${page.empty}"><td colspan="9" class="text-center text-muted py-4" th:text="#{common.noData}"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: pager(${page})}"></div>
+</div>
+<script></script>
+</body>
+</html>

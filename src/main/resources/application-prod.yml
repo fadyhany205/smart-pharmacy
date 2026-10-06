@@ -1,0 +1,65 @@
+# Production profile (cPanel). Activated automatically when deployed as a WAR to Tomcat,
+# or with --spring.profiles.active=prod when started with "java -jar".
+#
+# Real settings (DB user/password...) live OUTSIDE the WAR in:
+#     ~/pharmacy-system/config.yml      (e.g. /home/<cpanel-user>/pharmacy-system/config.yml)
+# so the WAR can be replaced on updates without losing them.
+
+spring:
+  config:
+    # config.yml is searched in all these places (later ones win if several exist):
+    #  1. ~/pharmacy-system/config.yml                (recommended)
+    #  2. <tomcat>/webapps/config.yml              (next to ROOT.war)
+    #  3. <tomcat>/conf/pharmacy-system.yml
+    #  4. ./config.yml                             (working directory, java -jar mode)
+    #  5. the file named by the STORE_CONFIG environment variable
+    import:
+      - optional:file:${user.home}/pharmacy-system/config.yml
+      - optional:file:${catalina.base:${user.home}/pharmacy-system}/webapps/config.yml
+      - optional:file:${catalina.base:${user.home}/pharmacy-system}/conf/pharmacy-system.yml
+      - optional:file:./config.yml
+      - optional:file:${STORE_CONFIG:./config.yml}
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/pharmacy_system?useUnicode=true&characterEncoding=utf8&serverTimezone=Africa/Cairo}
+    username: ${DB_USER:}
+    password: ${DB_PASS:}
+    hikari:
+      maximum-pool-size: 5          # shared hosting: keep connections low
+      minimum-idle: 1
+  jpa:
+    # Explicit dialect: if the DB connection fails, the log shows the real MySQL error
+    # (access denied / unknown database...) instead of "Unable to determine Dialect".
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+  thymeleaf:
+    cache: true
+
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework   # correct https/host behind the cPanel Apache proxy
+  servlet:
+    session:
+      cookie:
+        http-only: true
+      timeout: 12h
+
+app:
+  seed-demo-data: false
+  upload-dir: ${user.home}/pharmacy-system/uploads
+  backup:
+    mysqldump-path: /usr/bin/mysqldump
+  pdf:
+    fonts:
+      - ${user.home}/pharmacy-system/fonts/Cairo-Regular.ttf
+      - /usr/share/fonts/dejavu/DejaVuSans.ttf
+      - /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+
+logging:
+  file:
+    name: ${user.home}/pharmacy-system/logs/store.log
+  logback:
+    rollingpolicy:
+      max-history: 14
+  level:
+    root: info

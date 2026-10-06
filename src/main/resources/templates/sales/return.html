@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{sale.return}">Return</title></head>
+<body>
+<div id="content" th:with="s=${sale}">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="page-title"><span th:text="#{sale.return}"></span> - <a th:href="@{/sales/{id}(id=${s.id})}" th:text="${s.invoiceNo}"></a></h4>
+        <a class="btn btn-light ms-auto" th:href="@{/sales/{id}(id=${s.id})}"><i class="bi bi-arrow-return-left"></i> <span th:text="#{common.back}"></span></a>
+    </div>
+    <form th:action="@{/sales/{id}/return(id=${s.id})}" method="post" th:attr="data-confirm=#{return.confirm}">
+        <div class="card mb-3">
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr>
+                        <th th:text="#{col.product}"></th><th th:text="#{col.qty}"></th><th th:text="#{col.price}"></th>
+                        <th th:text="#{col.returned}"></th><th style="width:160px" th:text="#{return.qtyToReturn}"></th>
+                    </tr></thead>
+                    <tbody>
+                    <tr th:each="i : ${s.items}">
+                        <td th:text="${i.product.name}"></td>
+                        <td class="num" th:text="${@fmt.qty(i.qty) + ' ' + @fmt.unitName(i.product, i.sellUnit)}"></td>
+                        <td class="num" th:text="${@fmt.money(i.unitPrice)}"></td>
+                        <td class="num" th:text="${@fmt.qty(i.returnedQty) + ' ' + @fmt.unitName(i.product, i.sellUnit)}"></td>
+                        <td>
+                            <input type="number" step="any" min="0" class="form-control form-control-sm"
+                                   th:name="'qty_' + ${i.id}" th:max="${i.returnableQty}" value="0"
+                                   th:disabled="${i.returnableQty.signum() <= 0}">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card"><div class="card-body row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label" th:text="#{return.reason}"></label>
+                <input type="text" name="reason" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" th:text="#{return.settlement}"></label>
+                <select name="settlement" class="form-select">
+                    <option value="AUTO" th:if="${s.customer}" selected th:text="#{settlement.AUTO}"></option>
+                    <option value="BALANCE" th:if="${s.customer}" th:text="#{settlement.BALANCE}"></option>
+                    <option value="CASH" th:selected="${s.customer == null}" th:text="#{settlement.CASH}"></option>
+                </select>
+            </div>
+            <div class="col-md-3 d-grid">
+                <button class="btn btn-warning"><i class="bi bi-arrow-counterclockwise"></i> <span th:text="#{return.save}"></span></button>
+            </div>
+            <div class="col-12" th:if="${s.customer}">
+                <div class="alert alert-light border small mb-0">
+                    <div><span th:text="#{return.invoiceOutstanding}"></span>: <strong class="num" th:text="${@fmt.money(outstanding)}"></strong></div>
+                    <div><span th:text="#{return.customerBalance}"></span>: <strong class="num" th:text="${@fmt.money(s.customer.balance)}"></strong></div>
+                    <div class="text-muted mt-1" th:text="#{settlement.AUTO.help}"></div>
+                </div>
+            </div>
+            <div class="col-12 small text-muted" th:text="#{return.help}"></div>
+        </div></div>
+    </form>
+</div>
+<script></script>
+</body>
+</html>

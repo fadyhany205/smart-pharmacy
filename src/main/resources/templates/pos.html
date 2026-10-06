@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{nav.pos}">POS</title></head>
+<body>
+<div id="content">
+    <div class="row g-3">
+        <!-- ======== Cart ======== -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body pb-2">
+                    <div class="picker">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+                            <input id="scan" type="text" class="form-control pos-scan" autocomplete="off" autofocus
+                                   th:placeholder="#{pos.scanPlaceholder}">
+                        </div>
+                        <div class="picker-list list-group shadow"></div>
+                    </div>
+                </div>
+                <div class="pos-cart border-top">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="sticky-top">
+                        <tr>
+                            <th>#</th>
+                            <th th:text="#{col.product}"></th>
+                            <th th:text="#{pos.sellUnit}"></th>
+                            <th th:text="#{col.price}"></th>
+                            <th th:text="#{col.qty}"></th>
+                            <th th:text="#{col.discount}"></th>
+                            <th th:text="#{col.total}"></th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody id="cart"></tbody>
+                    </table>
+                    <div id="emptyCart" class="text-center text-muted py-5">
+                        <i class="bi bi-cart3 display-4 d-block mb-2"></i>
+                        <span th:text="#{pos.emptyCart}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======== Payment ======== -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <label class="form-label small mb-1" th:text="#{col.customer}"></label>
+                    <div class="picker mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input id="customerSearch" type="text" class="form-control" autocomplete="off"
+                                   th:placeholder="#{pos.customerSearchPlaceholder}">
+                            <button class="btn btn-outline-secondary" type="button" id="customerClear" th:title="#{pos.walkIn}"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                        <div class="picker-list list-group shadow"></div>
+                        <input type="hidden" id="customer">
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-1"><span th:text="#{col.subtotal}"></span><span class="num" id="subtotal">0.00</span></div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span th:text="#{col.discount}"></span>
+                        <div class="input-group input-group-sm" style="max-width:160px">
+                            <input id="discount" type="number" step="0.01" min="0" class="form-control text-end" value="0">
+                            <button id="discountType" type="button" class="btn btn-outline-secondary disc-toggle" data-pct="false"
+                                    th:attr="data-cur=${settings.currency}" th:title="#{discount.toggle}" th:text="${settings.currency}"></button>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2" th:if="${settings.taxEnabled}">
+                        <span><span th:text="#{col.tax}"></span> (<span th:text="${#numbers.formatDecimal(settings.taxRate, 1, 0)}"></span>%)</span>
+                        <span class="num" id="tax">0.00</span>
+                    </div>
+                    <div class="bg-dark text-white rounded p-3 text-center mb-3">
+                        <div class="small opacity-75" th:text="#{col.total}"></div>
+                        <div class="pos-total num"><span id="total">0.00</span> <small class="fs-6" th:text="${settings.currency}"></small></div>
+                    </div>
+
+                    <div class="d-flex gap-1 pay-methods mb-3" role="group">
+                        <input type="radio" class="btn-check" name="method" id="m-cash" value="CASH" checked>
+                        <label class="btn btn-outline-success" for="m-cash"><i class="bi bi-cash"></i> <span th:text="#{payment.CASH}"></span></label>
+                        <input type="radio" class="btn-check" name="method" id="m-card" value="CARD">
+                        <label class="btn btn-outline-primary" for="m-card"><i class="bi bi-credit-card"></i> <span th:text="#{payment.CARD}"></span></label>
+                        <input type="radio" class="btn-check" name="method" id="m-credit" value="CREDIT">
+                        <label class="btn btn-outline-warning" for="m-credit"><i class="bi bi-journal-text"></i> <span th:text="#{payment.CREDIT}"></span></label>
+                    </div>
+
+                    <label class="form-label small mb-1" th:text="#{pos.paidAmount}"></label>
+                    <input id="paid" type="number" step="0.01" min="0" class="form-control form-control-lg text-end mb-1" placeholder="0.00">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span th:text="#{pos.change}"></span><strong class="num text-success" id="change">0.00</strong>
+                    </div>
+
+                    <input id="notes" type="text" class="form-control form-control-sm mb-3" th:placeholder="#{col.notes}">
+
+                    <div class="d-grid gap-2">
+                        <button id="payBtn" class="btn btn-success btn-lg" type="button">
+                            <i class="bi bi-check2-circle"></i> <span th:text="#{pos.pay}"></span> <small>(F9)</small>
+                        </button>
+                        <div class="d-flex gap-2">
+                            <div class="form-check form-switch flex-grow-1 pt-1">
+                                <input class="form-check-input" type="checkbox" id="autoPrint" checked>
+                                <label class="form-check-label small" for="autoPrint" th:text="#{pos.autoPrint}"></label>
+                            </div>
+                            <button id="clearBtn" class="btn btn-outline-danger btn-sm" type="button"><i class="bi bi-trash"></i> <span th:text="#{pos.clear}"></span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Substitutes modal -->
+    <div class="modal fade" id="subsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title"><i class="bi bi-arrow-left-right"></i> <span th:text="#{pos.substitutesTitle}"></span>: <span id="subsFor"></span></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="list-group list-group-flush" id="subsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success modal -->
+    <div class="modal fade" id="doneModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center">
+                <div class="modal-body p-4">
+                    <i class="bi bi-check-circle-fill text-success display-3"></i>
+                    <h5 class="mt-2" th:text="#{pos.saved}"></h5>
+                    <div class="fs-5 fw-bold" id="doneNo"></div>
+                    <div class="fs-4 mt-2"><span th:text="#{pos.change}"></span>: <strong class="text-success num" id="doneChange"></strong></div>
+                    <div class="d-flex flex-wrap gap-2 justify-content-center mt-4">
+                        <a id="printThermal" class="btn btn-outline-dark" target="_blank"><i class="bi bi-receipt"></i> <span th:text="#{invoice.thermal}"></span></a>
+                        <a id="printA4" class="btn btn-outline-dark" target="_blank"><i class="bi bi-file-earmark-text"></i> <span th:text="#{invoice.a4}"></span></a>
+                        <button class="btn btn-success" data-bs-dismiss="modal"><i class="bi bi-plus-lg"></i> <span th:text="#{pos.newSale}"></span> (Enter)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const POS = {
+        taxRate: /*[[${settings.taxEnabled ? settings.taxRate : 0}]]*/ 0,
+        msg: {
+            notFound: /*[[#{pos.notFound('{0}')}]]*/ 'Not found: {0}',
+            empty: /*[[#{error.emptyInvoice}]]*/ 'Empty',
+            customerRequired: /*[[#{error.customerRequiredForCredit}]]*/ 'Customer required',
+            confirmClear: /*[[#{pos.confirmClear}]]*/ 'Clear?',
+            lowStock: /*[[#{pos.lowStockWarn}]]*/ 'Low stock',
+            invalidPercent: /*[[#{error.invalidPercent}]]*/ 'Percent 0-100',
+            toggle: /*[[#{discount.toggle}]]*/ 'Amount / %',
+            rx: /*[[#{pos.rxWarning}]]*/ 'Prescription required',
+            rxShort: /*[[#{product.rx}]]*/ 'Rx',
+            fridge: /*[[#{pos.fridge}]]*/ 'Fridge',
+            taxable: /*[[#{pos.taxableItem}]]*/ 'VAT',
+            expiresSoon: /*[[#{pos.expiresSoon('{0}')}]]*/ 'Expires {0}',
+            subs: /*[[#{pos.showSubstitutes}]]*/ 'Substitutes',
+            noSubs: /*[[#{product.noSubstitutes}]]*/ 'No substitutes',
+            outOfStock: /*[[#{pos.outOfStockSubstitutes}]]*/ 'Out of stock - show substitutes?'
+        },
+        currency: /*[[${settings.currency}]]*/ 'EGP',
+        warn: {
+            HBP: /*[[#{warn.HBP}]]*/ 'HBP', DIABETES: /*[[#{warn.DIABETES}]]*/ 'Diabetes', PREGNANCY: /*[[#{warn.PREGNANCY}]]*/ 'Pregnancy',
+            LACTATION: /*[[#{warn.LACTATION}]]*/ 'Lactation', KIDNEY: /*[[#{warn.KIDNEY}]]*/ 'Kidney', LIVER: /*[[#{warn.LIVER}]]*/ 'Liver',
+            HEART: /*[[#{warn.HEART}]]*/ 'Heart'
+        }
+    };
+</script>
+<script th:src="@{/js/pos.js}"></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="${ret.returnNo}">Return</title></head>
+<body>
+<div id="content" th:with="r=${ret}">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h4 class="page-title">
+            <span th:text="${r.salesReturn} ? #{return.salesReturn} : #{return.purchaseReturn}"></span>
+            <span th:text="${r.returnNo}"></span>
+        </h4>
+        <div class="ms-auto d-flex gap-2">
+            <a class="btn btn-outline-dark" target="_blank" th:href="@{/returns/{id}(id=${r.id},print=true)}"><i class="bi bi-printer"></i> <span th:text="#{common.print}"></span></a>
+            <a class="btn btn-light" th:href="@{/returns(type=${r.salesReturn ? 'sale' : 'purchase'})}"><i class="bi bi-arrow-return-left"></i> <span th:text="#{common.back}"></span></a>
+        </div>
+    </div>
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card">
+                <table class="table mb-0">
+                    <thead><tr><th>#</th><th th:text="#{col.product}"></th><th th:text="#{col.qty}"></th><th th:text="#{col.price}"></th><th th:text="#{col.total}"></th></tr></thead>
+                    <tbody>
+                    <tr th:each="i, st : ${r.items}">
+                        <td th:text="${st.count}"></td>
+                        <td th:text="${i.product.name}"></td>
+                        <td class="num" th:text="${@fmt.qty(i.qty) + ' ' + @fmt.unitName(i.product, i.sellUnit)}"></td>
+                        <td class="num" th:text="${@fmt.money(i.unitPrice)}"></td>
+                        <td class="num fw-semibold" th:text="${@fmt.money(i.lineTotal)}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card"><div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5" th:text="#{col.date}"></dt><dd class="col-7 num" th:text="${@fmt.dateTime(r.date)}"></dd>
+                    <dt class="col-5" th:text="#{return.original}"></dt>
+                    <dd class="col-7">
+                        <a th:if="${r.sale}" th:href="@{/sales/{id}(id=${r.sale.id})}" th:text="${r.sale.invoiceNo}"></a>
+                        <a th:if="${r.purchase}" th:href="@{/purchases/{id}(id=${r.purchase.id})}" th:text="${r.purchase.invoiceNo}"></a>
+                    </dd>
+                    <dt class="col-5" th:text="#{return.balancePart}"></dt><dd class="col-7 num" th:text="${@fmt.money(r.balanceAmount)}"></dd>
+                    <dt class="col-5" th:text="#{return.cashPart}"></dt><dd class="col-7 num" th:text="${@fmt.money(r.cashAmount)}"></dd>
+                    <dt class="col-5" th:text="#{return.reason}"></dt><dd class="col-7" th:text="${r.reason ?: '-'}"></dd>
+                    <dt class="col-5" th:text="#{col.tax}"></dt><dd class="col-7 num" th:text="${@fmt.money(r.taxAmount)}"></dd>
+                    <dt class="col-5 fs-5" th:text="#{col.total}"></dt><dd class="col-7 num fs-5 fw-bold" th:text="${@fmt.money(r.total)}"></dd>
+                </dl>
+            </div></div>
+        </div>
+    </div>
+</div>
+<script></script>
+</body>
+</html>

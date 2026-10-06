@@ -1,0 +1,7 @@
+target/
+release/
+uploads/
+*.log
+.idea/
+*.iml
+.vscode/

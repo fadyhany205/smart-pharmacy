@@ -1,0 +1,73 @@
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+
+spring:
+  application:
+    name: pharmacy-system
+  datasource:
+    # XAMPP ships MariaDB. For a real MySQL 8 server use:
+    #   url: jdbc:mysql://localhost:3306/pharmacy_system?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Africa/Cairo
+    url: jdbc:mariadb://localhost:3306/pharmacy_system?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8
+    username: root
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: true
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: Africa/Cairo
+        connection:
+          characterEncoding: utf8mb4
+        dialect.storage_engine: innodb
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+  servlet:
+    multipart:
+      max-file-size: 60MB
+      max-request-size: 65MB
+  thymeleaf:
+    cache: false
+
+# Defaults used the first time the database is created.
+# After that, everything is editable from the Settings page (stored in the DB).
+app:
+  store:
+    name-ar: صيدليتي
+    name-en: My Pharmacy
+    # Show "Tax number" and "Commercial register" fields on the Settings page
+    show-tax-fields: false
+  currency: EGP
+  tax:
+    enabled: true
+    rate: 14
+  default-language: ar
+  allow-negative-stock: false
+  # Adds sample products/customer/supplier on the first run (only when there are no products).
+  seed-demo-data: true
+  upload-dir: ./uploads
+  # System vendor shown in the footer of every screen and on report printouts / PDF / Excel
+  vendor:
+    name: smart-matgr
+    phone: "01024980610"
+  backup:
+    mysqldump-path: C:/xampp/mysql/bin/mysqldump.exe
+  pdf:
+    # Fonts used for Arabic text in PDF files (first existing one wins).
+    fonts:
+      - ./fonts/Cairo-Regular.ttf
+      - C:/Windows/Fonts/tahoma.ttf
+      - C:/Windows/Fonts/arial.ttf
+      - /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+
+logging:
+  level:
+    org.hibernate.SQL: warn

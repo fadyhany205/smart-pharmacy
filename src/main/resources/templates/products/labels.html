@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::script})}">
+<head><title th:text="#{nav.labels}">Labels</title></head>
+<body>
+<div id="content">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="page-title"><i class="bi bi-upc"></i> <span th:text="#{nav.labels}"></span></h4>
+    </div>
+
+    <div class="card mb-3"><div class="card-body">
+        <form class="row g-2" method="get">
+            <div class="col-md-5"><input type="text" name="q" class="form-control" th:value="${q}" th:placeholder="#{product.searchPlaceholder}"></div>
+            <div class="col-md-3">
+                <select name="categoryId" class="form-select">
+                    <option value="" th:text="#{common.allCategories}"></option>
+                    <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}" th:selected="${c.id == categoryId}"></option>
+                </select>
+            </div>
+            <div class="col-auto"><button class="btn btn-dark"><i class="bi bi-search"></i> <span th:text="#{common.search}"></span></button></div>
+        </form>
+    </div></div>
+
+    <form th:action="@{/products/labels/print}" method="post" target="_blank">
+        <div class="card mb-3"><div class="card-body row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label" th:text="#{labels.size}"></label>
+                <select name="size" class="form-select">
+                    <option value="38x25">38 × 25 mm</option>
+                    <option value="50x30">50 × 30 mm</option>
+                    <option value="58x40">58 × 40 mm</option>
+                    <option value="a4" th:text="#{labels.a4Sheet}"></option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <input type="hidden" name="fromForm" value="true">
+                <div class="form-check"><input class="form-check-input" type="checkbox" name="showName" value="true" id="sn" checked><label class="form-check-label" for="sn" th:text="#{labels.showName}"></label></div>
+            </div>
+            <div class="col-auto">
+                <div class="form-check"><input class="form-check-input" type="checkbox" name="showPrice" value="true" id="sp" checked><label class="form-check-label" for="sp" th:text="#{labels.showPrice}"></label></div>
+            </div>
+            <div class="col-auto">
+                <div class="input-group">
+                    <input type="number" id="allCopies" class="form-control" min="0" value="1" style="max-width:90px">
+                    <button type="button" class="btn btn-outline-secondary" onclick="document.querySelectorAll('.copies').forEach(i => i.value = document.getElementById('allCopies').value)" th:text="#{labels.setAll}"></button>
+                </div>
+            </div>
+            <div class="col-auto ms-auto">
+                <button class="btn btn-primary"><i class="bi bi-printer"></i> <span th:text="#{labels.print}"></span></button>
+            </div>
+        </div></div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead><tr>
+                        <th th:text="#{col.product}"></th><th th:text="#{col.barcode}"></th>
+                        <th th:text="#{col.salePrice}"></th><th th:text="#{col.stock}"></th><th style="width:130px" th:text="#{labels.copies}"></th>
+                    </tr></thead>
+                    <tbody>
+                    <tr th:each="p : ${page.content}">
+                        <td th:text="${p.name}"></td>
+                        <td class="num" th:text="${p.barcode}"></td>
+                        <td class="num" th:text="${@fmt.money(p.salePrice)}"></td>
+                        <td class="num" th:text="${@fmt.qty(p.stockQty)}"></td>
+                        <td>
+                            <input type="hidden" name="productId" th:value="${p.id}">
+                            <input type="number" name="copies" class="form-control form-control-sm copies" min="0" max="500" value="0">
+                        </td>
+                    </tr>
+                    <tr th:if="${page.empty}"><td colspan="5" class="text-center text-muted py-4" th:text="#{common.noData}"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+    <div th:replace="~{fragments :: pager(${page})}"></div>
+</div>
+<script></script>
+</body>
+</html>
