@@ -1,0 +1,9 @@
+target/
+release/
+uploads/
+.git/
+.idea/
+.vscode/
+.claude/
+*.log
+*.iml
