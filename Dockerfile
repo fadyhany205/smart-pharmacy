@@ -15,8 +15,13 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /build/target/pharmacy-system.war app.war
+# Writable data folder: Hugging Face Spaces runs the container as uid 1000, not root
+RUN mkdir -p /app/data/uploads /app/data/logs && chown -R 1000:1000 /app/data
 ENV SPRING_PROFILES_ACTIVE=prod \
     TZ=Africa/Cairo \
+    APP_UPLOADDIR=/app/data/uploads \
+    LOGGING_FILE_NAME=/app/data/logs/store.log \
     JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+UseSerialGC"
+USER 1000
 EXPOSE 8080
 CMD ["sh", "-c", "exec java $JAVA_OPTS -jar app.war"]

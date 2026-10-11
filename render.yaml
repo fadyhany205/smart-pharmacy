@@ -18,7 +18,7 @@ services:
       # Where product images / store logo are saved. On the free plan this folder is wiped on every
       # deploy/restart. For permanent uploads use a paid plan, uncomment the disk below and set /var/data/uploads.
       - key: APP_UPLOADDIR
-        value: /app/uploads
+        value: /app/data/uploads
     # disk:
     #   name: uploads
     #   mountPath: /var/data

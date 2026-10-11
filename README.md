@@ -1,3 +1,13 @@
+---
+title: Smart Pharmacy
+emoji: 💊
+colorFrom: green
+colorTo: blue
+sdk: docker
+app_port: 8080
+pinned: false
+---
+
 # Pharmacy System — نظام إدارة الصيدلية
 
 A bilingual (Arabic / English, **Arabic by default**) pharmacy management system, built from the Store System:
